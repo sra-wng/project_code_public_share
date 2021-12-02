@@ -30,8 +30,8 @@ class Agent(object):
         self.train_stds = [0.86022694, 0.74355865, 0.53157464]
         
         # Item Embeddings
-        self.item0_embedding = 'data/item0embedding'
-        self.item1_embedding = 'data/item1embedding'
+        self.item0_embedding = pickle.load(open('data/item0embedding', 'rb'))
+        self.item1_embedding = pickle.load(open('data/item1embedding', 'rb'))
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
