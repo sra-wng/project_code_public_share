@@ -58,14 +58,14 @@ class Agent(object):
 
         which_item_customer_bought = last_sale[0]
 
-        print("My current profit: ", my_current_profit)
-        print("Opponent current profit: ", opponent_current_profit)
-        print("My last prices: ", my_last_prices)
-        print("Opponent last prices: ", opponent_last_prices)
-        print("Did customer buy from me: ", did_customer_buy_from_me)
-        print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
-        print("Which item customer bought: ", which_item_customer_bought)
-        print("Time to run last iteration: ", self.time)
+        # print("My current profit: ", my_current_profit)
+        # print("Opponent current profit: ", opponent_current_profit)
+        # print("My last prices: ", my_last_prices)
+        # print("Opponent last prices: ", opponent_last_prices)
+        # print("Did customer buy from me: ", did_customer_buy_from_me)
+        # print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
+        # print("Which item customer bought: ", which_item_customer_bought)
+        # print("Time to run last iteration: ", self.time)
 
         # TEAM SVM CODE STARTS HERE
         self.my_prices.append(my_last_prices)
