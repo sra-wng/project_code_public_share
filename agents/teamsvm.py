@@ -35,6 +35,7 @@ class Agent(object):
 
         # time variable for tracking how fast our program runs
         self.time = 0
+        self.iter = 0
 
         # competitor pricing strategy
         self.alpha = 1
@@ -77,12 +78,12 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        self.X_covs.append(np.concatenate((my_last_prices,self.last_covs)))
+        self.X_covs.append(np.concatenate((my_last_prices,self.last_covs)).tolist())
         self.y_covs.append(
             which_item_customer_bought if did_customer_buy_from_me else -1
         )
         if self.last_full_covs is not None:
-            self.X_covs_embeddings.append(np.concatenate((my_last_prices, self.last_full_covs)))
+            self.X_covs_embeddings.append(np.concatenate((my_last_prices, self.last_full_covs)).tolist())
             self.y_covs_embeddings.append(
                 which_item_customer_bought if did_customer_buy_from_me else -1
             )
@@ -97,8 +98,6 @@ class Agent(object):
 
         # retrain our model every 50 runs based on performance
         if len(self.item_purchased) % 50 == 0:
-            print("X COVS: ", self.X_covs)
-            print("Y COVS: ", self.y_covs)
             self.trained_model_covs_only = LogisticRegression(
                 multi_class="multinomial", max_iter=500
             ).fit(X=self.X_covs, y=self.y_covs)
@@ -112,9 +111,9 @@ class Agent(object):
     # Returns an action: a list of length n_items=2, indicating prices this agent is posting for each item.
     def action(self, obs):
         new_buyer_covariates, new_buyer_embedding, last_sale, profit_each_team = obs
-        self._process_last_sale(last_sale, profit_each_team)
+        if self.iter > 0:
+            self._process_last_sale(last_sale, profit_each_team)
 
-        # TEAM SVM CODE STARTS HERE
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
         self.last_covs = covs  # save for training
@@ -131,9 +130,8 @@ class Agent(object):
                 self.trained_model_covs_only, covs
             )
         self.time = time.time() - self.time  # end timer
-        print(prices)
+        self.iter += 1
         return [self.alpha * p for p in prices]
-        # TEAM SVM CODE ENDS HERE
 
     def normalize_covs(self, covariate):
         # z = (x - u) / s
