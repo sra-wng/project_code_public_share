@@ -83,11 +83,11 @@ class Agent(object):
                     self.punish = True
         else:
             self.alpha *= 0.9
-            for i, p in enumerate([self.alpha * p for p in self.my_pred_prices]):
+            for i, p in enumerate([self.alpha * p for p in self.my_pred_prices[-1]]):
                 if (opponent_last_prices[i]/my_last_prices[i] > 0.5):
                     self.punish = False
 
-        # add forgiveness if the alpha goes too low
+        # add random forgiveness if the alpha goes too low
         self.alpha = (
             0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
         )
