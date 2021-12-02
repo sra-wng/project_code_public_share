@@ -19,8 +19,11 @@ class Agent(object):
         # Complications: pickle should work with any machine learning models
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
-        self.filename1 = 'machine_learning_model/final_model_covs_and_embedded'
-        self.filename2 = 'machine_learning_model/final_model_covs_only'
+        self.filename1 = 'machine_learning_model/trained_model'
+        self.filename2 = 'machine_learning_model/trained_model'
+        
+        # self.filename1 = 'machine_learning_model/final_model_covs_and_embedded'
+        # self.filename2 = 'machine_learning_model/final_model_covs_only'
         self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, 'rb'))
         self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
         
