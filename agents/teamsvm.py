@@ -33,6 +33,13 @@ class Agent(object):
         
         # time variable for tracking how fast our program runs
         self.time = 0
+        
+        # competitor pricing strategy
+        self.alpha = 1
+        self.my_prices = []
+        self.opponent_prices = []
+        self.agent_winner = []
+        self.item_purchased = []
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -58,6 +65,13 @@ class Agent(object):
         print("Time to run last iteration: ", self.time)
 
         # TEAM SVM CODE STARTS HERE
+        self.my_prices.append(my_last_prices)
+        self.opponent_prices.append(opponent_last_prices)
+        self.agent_winner.append(last_sale[1])
+        self.item_purchased.append(which_item_customer_bought)
+        
+        # Simple strategy based on last purchase to increase or decrease alpha
+        self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
         
         # TEAM SVM CODE ENDS HERE
         pass
@@ -82,7 +96,7 @@ class Agent(object):
         self.time = time.time() - self.time # end timer
         # TEAM SVM CODE ENDS HERE
         
-        return p
+        return self.alpha * p
     
     def normalize_covs(self, covariate):
         # z = (x - u) / s
