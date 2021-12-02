@@ -39,12 +39,10 @@ class Agent(object):
 
         # competitor pricing strategy
         self.alpha = 1
-        self.my_act_prices = []
-        self.my_pred_prices = []
+        self.my_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
-        self.punish = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -70,28 +68,18 @@ class Agent(object):
         print("Time to run last iteration: ", self.time)
 
         # TEAM SVM CODE STARTS HERE
-        self.my_act_prices.append(my_last_prices)
+        self.my_prices.append(my_last_prices)
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
 
         # Simple strategy based on last purchase to increase or decrease alpha
-        if not self.punish:
-            self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
-            for i, p in enumerate(my_last_prices):
-                if (opponent_last_prices[i]/p < 0.3):
-                    self.punish = True
-        else:
-            self.alpha *= 0.9
-            for i, p in enumerate([self.alpha * p for p in self.my_pred_prices[-1]]):
-                if (opponent_last_prices[i]/p > 0.3):
-                    self.punish = False
+        self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
 
-        # add random forgiveness if the alpha goes too low
+        # add forgiveness if the alpha goes too low
         self.alpha = (
             0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
         )
-        
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -115,14 +103,9 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
-        self.my_pred_prices.append(prices)
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        if self.punish: # tit for tat game theory punishment
-            prices = [0.01, 0.01]
-        else:
-            prices = [self.alpha * p for p in prices]
-        return prices
+        return [self.alpha * p for p in prices]
 
     def normalize_covs(self, covariate):
         # z = (x - u) / s
