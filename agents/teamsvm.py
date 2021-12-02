@@ -113,6 +113,7 @@ class Agent(object):
         self.iter += 1
         if self.punish: # tit for tat game theory punishment
             prices = [0.01, 0.01]
+            self.punish = False
         else:
             prices = [self.alpha * p for p in prices]
         return prices
