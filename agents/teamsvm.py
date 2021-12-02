@@ -43,6 +43,7 @@ class Agent(object):
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
+        self.punish = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -80,6 +81,11 @@ class Agent(object):
         self.alpha = (
             0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
         )
+        
+        # add punishment for one round if the customers prices were far too unreasonable
+        for me_po, me_p1, op_po, op_p1 in zip(my_last_prices, opponent_last_prices):
+            if (op_po/me_po < 0.5) or (op_p1/me_p1 < 0.5):
+                self.punish = True
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -105,7 +111,11 @@ class Agent(object):
             )
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        return [self.alpha * p for p in prices]
+        if self.punish: # tit for tat game theory punishment
+            prices = [0.01, 0.01]
+        else:
+            prices = [self.alpha * p for p in prices]
+        return prices
 
     def normalize_covs(self, covariate):
         # z = (x - u) / s
