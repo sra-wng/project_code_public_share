@@ -97,12 +97,14 @@ class Agent(object):
 
         # retrain our model every 50 runs based on performance
         if len(self.item_purchased) % 50 == 0:
+            print("X COVS: ", self.X_covs)
+            print("Y COVS: ", self.y_covs)
             self.trained_model_covs_only = LogisticRegression(
                 multi_class="multinomial", max_iter=500
-            ).fit(self.X_covs, self.y_covs)
+            ).fit(X=self.X_covs, y=self.y_covs)
             self.trained_model_covs_and_noisy = LogisticRegression(
                 multi_class="multinomial", max_iter=500
-            ).fit(self.X_covs_embeddings, self.y_covs_embeddings)
+            ).fit(X=self.X_covs_embeddings, y=self.y_covs_embeddings)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -129,6 +131,7 @@ class Agent(object):
                 self.trained_model_covs_only, covs
             )
         self.time = time.time() - self.time  # end timer
+        print(prices)
         return [self.alpha * p for p in prices]
         # TEAM SVM CODE ENDS HERE
 
