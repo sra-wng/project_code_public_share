@@ -77,12 +77,12 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        self.X_covs.append(my_last_prices + self.last_covs)
+        self.X_covs.append(np.concatenate((my_last_prices,self.last_covs)))
         self.y_covs.append(
             which_item_customer_bought if did_customer_buy_from_me else -1
         )
         if self.last_full_covs is not None:
-            self.X_covs_embeddings.append(my_last_prices + self.last_full_covs)
+            self.X_covs_embeddings.append(np.concatenate((my_last_prices, self.last_full_covs)))
             self.y_covs_embeddings.append(
                 which_item_customer_bought if did_customer_buy_from_me else -1
             )
