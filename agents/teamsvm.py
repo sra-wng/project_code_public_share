@@ -28,12 +28,12 @@ class Agent(object):
         self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
         
         # Training Mean and Standard Deviation for Normalization
-        self.train_mean = 0
-        self.train_std = 1
+        self.train_means = [0.00534622, 0.00412864, 0.00322634]
+        self.train_stds = [0.86022694, 0.74355865, 0.53157464]
         
         # Item Embeddings
-        self.item0embedding = 'data/item0embedding'
-        self.item1embedding = 'data/item1embedding'
+        self.item0_embedding = 'data/item0embedding'
+        self.item1_embedding = 'data/item1embedding'
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -69,7 +69,7 @@ class Agent(object):
         self._process_last_sale(last_sale, profit_each_team)
         
         # TEAM SVM CODE STARTS HERE
-        covs= self.normalize(new_buyer_covariates)
+        covs= self.normalize_covs(new_buyer_covariates)
         if new_buyer_embedding.all() != None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -80,9 +80,9 @@ class Agent(object):
         # TODO Currently this output is just a deterministic 2-d array, but the students are expected to use the buyer covariates to make a better prediction
         # and to use the history of prices from each team in order to create prices for each item.
     
-    def normalize(self, covariate):
+    def normalize_covs(self, covariate):
         # z = (x - u) / s
-        return (covariate - self.train_mean) / self.train_std
+        return (covariate - self.train_means) / self.train_stds
     
     def get_user_item_vectors(self, user_vectors):
         items0 = np.dot(user_vectors, np.array(self.item0_embedding).T)
