@@ -2,9 +2,11 @@ import random
 import pickle
 import os
 import numpy as np
+
 # Team SVM Libraries
 import itertools
 import time
+from sklearn.linear_model import LogisticRegression
 
 
 class Agent(object):
@@ -17,29 +19,35 @@ class Agent(object):
         # Complications: pickle should work with any machine learning models
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
-        
-        self.filename1 = 'machine_learning_model/final_model_covs_and_noisy'
-        self.filename2 = 'machine_learning_model/final_model_covs_only'
-        self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, 'rb'))
-        self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
-        
+
+        self.filename1 = "machine_learning_model/final_model_covs_and_noisy"
+        self.filename2 = "machine_learning_model/final_model_covs_only"
+        self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, "rb"))
+        self.trained_model_covs_only = pickle.load(open(self.filename2, "rb"))
+
         # Training Mean and Standard Deviation for Normalization
         self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
         self.train_stds = np.sqrt([0.86022694, 0.74355865, 0.53157464])
-        
+
         # Item Embeddings
-        self.item0_embedding = pickle.load(open('data/item0embedding', 'rb'))
-        self.item1_embedding = pickle.load(open('data/item1embedding', 'rb'))
-        
+        self.item0_embedding = pickle.load(open("data/item0embedding", "rb"))
+        self.item1_embedding = pickle.load(open("data/item1embedding", "rb"))
+
         # time variable for tracking how fast our program runs
         self.time = 0
-        
+
         # competitor pricing strategy
         self.alpha = 1
         self.my_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
+        self.last_covs = []
+        self.last_full_covs = []
+        self.X_covs = []
+        self.y_covs = []
+        self.X_covs_embeddings = []
+        self.y_covs_embeddings = []
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -69,16 +77,32 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        
+        self.X_covs.append(my_last_prices + self.last_covs)
+        self.y_covs.append(
+            which_item_customer_bought if did_customer_buy_from_me else -1
+        )
+        if self.last_full_covs is not None:
+            self.X_covs_embeddings.append(my_last_prices + self.last_full_covs)
+            self.y_covs_embeddings.append(
+                which_item_customer_bought if did_customer_buy_from_me else -1
+            )
+
         # Simple strategy based on last purchase to increase or decrease alpha
         self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
-        
+
         # add forgiveness if the alpha goes too low
-        self.alpha = 1 if (self.alpha< 0.5 and random.uniform(0, 1) < 0.1)else self.alpha
-        # Determine opponent strategy
-        
-        # TEAM SVM CODE ENDS HERE
-        pass
+        self.alpha = (
+            0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
+        )
+
+        # retrain our model every 50 runs based on performance
+        if len(self.item_purchased) % 50 == 0:
+            self.trained_model_covs_only = LogisticRegression(
+                multi_class="multinomial", max_iter=500
+            ).fit(self.X_covs, self.y_covs)
+            self.trained_model_covs_and_noisy = LogisticRegression(
+                multi_class="multinomial", max_iter=500
+            ).fit(self.X_covs_embeddings, self.y_covs_embeddings)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -87,48 +111,66 @@ class Agent(object):
     def action(self, obs):
         new_buyer_covariates, new_buyer_embedding, last_sale, profit_each_team = obs
         self._process_last_sale(last_sale, profit_each_team)
-        
+
         # TEAM SVM CODE STARTS HERE
-        self.time = time.time() # start timer
-        covs= self.normalize_covs(new_buyer_covariates)
+        self.time = time.time()  # start timer
+        covs = self.normalize_covs(new_buyer_covariates)
+        self.last_covs = covs  # save for training
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
-            prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
+            self.last_full_covs = full_covs  # save for training
+            prices, rev = self.find_optimal_revenue_fast(
+                self.trained_model_covs_and_noisy, full_covs
+            )
         else:
-            prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
-        self.time = time.time() - self.time # end timer
+            self.last_full_covs = None
+            prices, rev = self.find_optimal_revenue_fast(
+                self.trained_model_covs_only, covs
+            )
+        self.time = time.time() - self.time  # end timer
         return [self.alpha * p for p in prices]
         # TEAM SVM CODE ENDS HERE
-    
+
     def normalize_covs(self, covariate):
         # z = (x - u) / s
         return (covariate - self.train_means) / self.train_stds
-    
+
     def get_user_item_vectors(self, user_vectors):
-        items0 = np.dot(user_vectors, np.array(self.item0_embedding, dtype=np.float64).T)
-        items1 = np.dot(user_vectors, np.array(self.item1_embedding, dtype=np.float64).T)
+        items0 = np.dot(
+            user_vectors, np.array(self.item0_embedding, dtype=np.float64).T
+        )
+        items1 = np.dot(
+            user_vectors, np.array(self.item1_embedding, dtype=np.float64).T
+        )
         return np.column_stack((items0, items1))[0]
-    
+
     def get_demand_predict(self, model, prices, covariates):
-        variables = np.concatenate((list(prices),covariates))
+        variables = np.concatenate((list(prices), covariates))
         # remove the prediction for no products purchased
         return model.predict_proba([variables])[0][1:]
-    
+
     def revenue_maximization(self, prices, demands):
-        r = [p1*d1 + p2*d2 for p1,p2,d1,d2 in [list(itertools.chain(*i)) for i in zip(prices, demands)]]
+        r = [
+            p1 * d1 + p2 * d2
+            for p1, p2, d1, d2 in [
+                list(itertools.chain(*i)) for i in zip(prices, demands)
+            ]
+        ]
         mr = max(r)
         ind = r.index(mr)
         return prices[ind], mr
-    
-    def find_optimal_revenue_fast(self, model, user_covariates, eps = 1e-10):
+
+    def find_optimal_revenue_fast(self, model, user_covariates, eps=1e-10):
         pr_1 = np.linspace(0, 2.3, 10)
         pr_2 = np.linspace(0, 4, 10)
         diff = 1
         r_old = 0
         while diff > eps:
             prices = list(itertools.product(pr_1, pr_2))
-            demands = [self.get_demand_predict(model, x, user_covariates) for x in prices]
+            demands = [
+                self.get_demand_predict(model, x, user_covariates) for x in prices
+            ]
             opt_prices, r_new = self.revenue_maximization(prices, demands)
             diff = r_new - r_old
             r_old = r_new

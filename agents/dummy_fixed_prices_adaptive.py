@@ -20,4 +20,4 @@ class Agent(object):
         new_buyer_covariates, new_buyer_embedding, last_sale, state = obs
         self._process_last_sale(last_sale)
         # prices that I determined were pretty good if doing fixed prices for each item, i.e. not using embeddings or covariates
-        return [0.97498204*self.alpha, 4.19529964*self.alpha]
+        return [0.97498204 * self.alpha, 4.19529964 * self.alpha]
