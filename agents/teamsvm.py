@@ -26,8 +26,8 @@ class Agent(object):
         self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
         
         # Training Mean and Standard Deviation for Normalization
-        self.train_means = [0.00534622, 0.00412864, 0.00322634]
-        self.train_stds = [0.86022694, 0.74355865, 0.53157464]
+        self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
+        self.train_stds = np.sqrt([0.86022694, 0.74355865, 0.53157464])
         
         # Item Embeddings
         self.item0_embedding = pickle.load(open('data/item0embedding', 'rb'))
