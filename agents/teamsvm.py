@@ -43,12 +43,6 @@ class Agent(object):
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
-        self.last_covs = []
-        self.last_full_covs = []
-        self.X_covs = []
-        self.y_covs = []
-        self.X_covs_embeddings = []
-        self.y_covs_embeddings = []
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -78,15 +72,6 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        self.X_covs.append(np.concatenate((my_last_prices,self.last_covs)).tolist())
-        self.y_covs.append(
-            which_item_customer_bought if did_customer_buy_from_me else -1
-        )
-        if self.last_full_covs is not None:
-            self.X_covs_embeddings.append(np.concatenate((my_last_prices, self.last_full_covs)).tolist())
-            self.y_covs_embeddings.append(
-                which_item_customer_bought if did_customer_buy_from_me else -1
-            )
 
         # Simple strategy based on last purchase to increase or decrease alpha
         self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
@@ -95,15 +80,6 @@ class Agent(object):
         self.alpha = (
             0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
         )
-
-        # retrain our model every 50 runs based on performance
-        if len(self.item_purchased) % 50 == 0:
-            self.trained_model_covs_only = LogisticRegression(
-                multi_class="multinomial", max_iter=500
-            ).fit(X=self.X_covs, y=self.y_covs)
-            self.trained_model_covs_and_noisy = LogisticRegression(
-                multi_class="multinomial", max_iter=500
-            ).fit(X=self.X_covs_embeddings, y=self.y_covs_embeddings)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -116,11 +92,9 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        self.last_covs = covs  # save for training
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
-            self.last_full_covs = full_covs  # save for training
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_and_noisy, full_covs
             )
