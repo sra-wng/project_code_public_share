@@ -83,8 +83,8 @@ class Agent(object):
         )
         
         # add punishment for one round if the customers prices were far too unreasonable
-        for me_po, me_p1, op_po, op_p1 in zip(my_last_prices, opponent_last_prices):
-            if (op_po/me_po < 0.5) or (op_p1/me_p1 < 0.5):
+        for i, p in enumerate(my_last_prices):
+            if (opponent_last_prices[i]/my_last_prices[i] < 0.5):
                 self.punish = True
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
