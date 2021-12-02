@@ -78,7 +78,7 @@ class Agent(object):
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            0.8 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
+            1.75 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.1) else self.alpha
         )
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
