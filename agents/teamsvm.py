@@ -4,8 +4,6 @@ import os
 import numpy as np
 # Team SVM Libraries
 import itertools
-from sklearn import preprocessing
-import pandas as pd
 import time
 
 
@@ -59,7 +57,9 @@ class Agent(object):
         print("Which item customer bought: ", which_item_customer_bought)
         print("Time to run last iteration: ", self.time)
 
-        # TODO - add your code here to potentially update your pricing strategy based on what happened in the last round
+        # TEAM SVM CODE STARTS HERE
+        
+        # TEAM SVM CODE ENDS HERE
         pass
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
@@ -80,9 +80,9 @@ class Agent(object):
         else:
             p, r = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
         self.time = time.time() - self.time # end timer
+        # TEAM SVM CODE ENDS HERE
+        
         return p
-        # TODO Currently this output is just a deterministic 2-d array, but the students are expected to use the buyer covariates to make a better prediction
-        # and to use the history of prices from each team in order to create prices for each item.
     
     def normalize_covs(self, covariate):
         # z = (x - u) / s
