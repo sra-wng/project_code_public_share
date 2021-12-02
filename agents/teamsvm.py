@@ -79,12 +79,12 @@ class Agent(object):
         if not self.punish:
             self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
             for i, p in enumerate(my_last_prices):
-                if (opponent_last_prices[i]/my_last_prices[i] < 0.5):
+                if (opponent_last_prices[i]/my_last_prices[i] < 0.2):
                     self.punish = True
         else:
             self.alpha *= 0.9
             for i, p in enumerate([self.alpha * p for p in self.my_pred_prices[-1]]):
-                if (opponent_last_prices[i]/my_last_prices[i] > 0.5):
+                if (opponent_last_prices[i]/my_last_prices[i] > 0.2):
                     self.punish = False
 
         # add random forgiveness if the alpha goes too low
