@@ -19,14 +19,21 @@ class Agent(object):
         # Complications: pickle should work with any machine learning models
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
-        self.filename1 = 'machine_learning_model/final_model_covs_and_noisy'
-        self.filename2 = 'machine_learning_model/final_model_covs_only'
+        self.filename1 = 'machine_learning_model/trained_model'
+        self.filename2 = 'machine_learning_model/trained_model'
+        
+        # self.filename1 = 'machine_learning_model/final_model_covs_and_noisy'
+        # self.filename2 = 'machine_learning_model/final_model_covs_only'
         self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, 'rb'))
         self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
         
+        # Training Mean and Standard Deviation for Normalization
+        self.train_means = [0.00534622, 0.00412864, 0.00322634]
+        self.train_stds = [0.86022694, 0.74355865, 0.53157464]
+        
         # Item Embeddings
-        self.item0embedding = 'data/item0embedding'
-        self.item1embedding = 'data/item1embedding'
+        self.item0_embedding = 'data/item0embedding'
+        self.item1_embedding = 'data/item1embedding'
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -62,12 +69,8 @@ class Agent(object):
         self._process_last_sale(last_sale, profit_each_team)
         
         # TEAM SVM CODE STARTS HERE
-        print("reached here")
-        print(type(new_buyer_covariates))
-        print(new_buyer_covariates)
-        covs_norm = self.normalize(new_buyer_covariates)
-        covs = [covs_norm['Covariate 1'], covs_norm['Covariate 2'], covs_norm['Covariate 3']]
-        if new_buyer_embedding != None:
+        covs= self.normalize_covs(new_buyer_covariates)
+        if new_buyer_embedding.all() != None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
             p, r = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
@@ -77,15 +80,9 @@ class Agent(object):
         # TODO Currently this output is just a deterministic 2-d array, but the students are expected to use the buyer covariates to make a better prediction
         # and to use the history of prices from each team in order to create prices for each item.
     
-    def normalize(self, covariate):
-        scaler = preprocessing.StandardScaler()
-        x_scaled = scaler.fit_transform(covariate[['Covariate 1','Covariate 2','Covariate 3']])
-        covariate_normed = pd.DataFrame(x_scaled)
-        covariate_normed.insert(0,'user_index',covariate.index)
-        covariate_normed.rename(columns={0:'Covariate 1',1:'Covariate 2',2:'Covariate 3'},inplace=True)
-        covariate_normed.set_index('user_index',drop=True, inplace=True)
-        covariate_normed.index.name = None 
-        return covariate_normed
+    def normalize_covs(self, covariate):
+        # z = (x - u) / s
+        return (covariate - self.train_means) / self.train_stds
     
     def get_user_item_vectors(self, user_vectors):
         items0 = np.dot(user_vectors, np.array(self.item0_embedding).T)
