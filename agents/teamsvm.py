@@ -75,7 +75,10 @@ class Agent(object):
         self.item_purchased.append(which_item_customer_bought)
 
         # Simple strategy based on last purchase to increase or decrease alpha
-        self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+        if not self.punish:
+            self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+        else:
+            self.alpha *= 0.9
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
