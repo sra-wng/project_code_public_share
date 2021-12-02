@@ -70,8 +70,7 @@ class Agent(object):
         
         # TEAM SVM CODE STARTS HERE
         covs= self.normalize(new_buyer_covariates)
-        print(new_buyer_embedding)
-        if new_buyer_embedding != None:
+        if new_buyer_embedding.all() != None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
             p, r = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
