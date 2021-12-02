@@ -42,14 +42,13 @@ class Agent(object):
 
         which_item_customer_bought = last_sale[0]
 
-        # print("My current profit: ", my_current_profit)
-        # print("Opponent current profit: ", opponent_current_profit)
-        # print("My last prices: ", my_last_prices)
-        # print("Opponent last prices: ", opponent_last_prices)
-        # print("Did customer buy from me: ", did_customer_buy_from_me)
-        # print("Did customer buy from opponent: ",
-        #       did_customer_buy_from_opponent)
-        # print("Which item customer bought: ", which_item_customer_bought)
+        print("My current profit: ", my_current_profit)
+        print("Opponent current profit: ", opponent_current_profit)
+        print("My last prices: ", my_last_prices)
+        print("Opponent last prices: ", opponent_last_prices)
+        print("Did customer buy from me: ", did_customer_buy_from_me)
+        print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
+        print("Which item customer bought: ", which_item_customer_bought)
 
         # TODO - add your code here to potentially update your pricing strategy based on what happened in the last round
         pass
@@ -63,6 +62,9 @@ class Agent(object):
         self._process_last_sale(last_sale, profit_each_team)
         
         # TEAM SVM CODE STARTS HERE
+        print("reached here")
+        print(type(new_buyer_covariates))
+        print(new_buyer_covariates)
         covs_norm = self.normalize(new_buyer_covariates)
         covs = [covs_norm['Covariate 1'], covs_norm['Covariate 2'], covs_norm['Covariate 3']]
         if new_buyer_embedding != None:
