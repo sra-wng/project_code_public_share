@@ -6,7 +6,7 @@ import numpy as np
 import itertools
 from sklearn import preprocessing
 import pandas as pd
-#import time
+import time
 
 
 class Agent(object):
@@ -32,6 +32,9 @@ class Agent(object):
         # Item Embeddings
         self.item0_embedding = pickle.load(open('data/item0embedding', 'rb'))
         self.item1_embedding = pickle.load(open('data/item1embedding', 'rb'))
+        
+        # time variable for tracking how fast our program runs
+        self.time = 0
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -54,6 +57,7 @@ class Agent(object):
         print("Did customer buy from me: ", did_customer_buy_from_me)
         print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
         print("Which item customer bought: ", which_item_customer_bought)
+        print("Time to run last iteration: ", self.time)
 
         # TODO - add your code here to potentially update your pricing strategy based on what happened in the last round
         pass
@@ -67,6 +71,7 @@ class Agent(object):
         self._process_last_sale(last_sale, profit_each_team)
         
         # TEAM SVM CODE STARTS HERE
+        self.time = time.time() # start timer
         covs= self.normalize_covs(new_buyer_covariates)
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
@@ -74,6 +79,7 @@ class Agent(object):
             p, r = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
         else:
             p, r = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
+        self.time = time.time() - self.time # end timer
         return p
         # TODO Currently this output is just a deterministic 2-d array, but the students are expected to use the buyer covariates to make a better prediction
         # and to use the history of prices from each team in order to create prices for each item.
