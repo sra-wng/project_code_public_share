@@ -71,7 +71,11 @@ class Agent(object):
         self.item_purchased.append(which_item_customer_bought)
         
         # Simple strategy based on last purchase to increase or decrease alpha
-        self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
+        self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+        
+        # add forgiveness if the alpha goes too low
+        self.alpha = 1 if (self.alpha< 0.5 and random.uniform(0, 1) < 0.1)else self.alpha
+        # Determine opponent strategy
         
         # TEAM SVM CODE ENDS HERE
         pass
