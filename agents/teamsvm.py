@@ -85,8 +85,8 @@ class Agent(object):
         return (covariate - self.train_means) / self.train_stds
     
     def get_user_item_vectors(self, user_vectors):
-        items0 = np.dot(user_vectors, np.array(self.item0_embedding).T)
-        items1 = np.dot(user_vectors, np.array(self.item1_embedding).T)
+        items0 = np.dot(user_vectors, np.array(self.item0_embedding, dtype=np.float64).T)
+        items1 = np.dot(user_vectors, np.array(self.item1_embedding, dtype=np.float64).T)
         return np.column_stack((items0, items1))[0]
     
     def get_demand_predict(self, model, prices, covariates):
