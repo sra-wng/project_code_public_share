@@ -19,10 +19,14 @@ class Agent(object):
         # Complications: pickle should work with any machine learning models
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
-        self.filename1 = 'machine_learning_model/trained_model'
-        self.filename2 = 'machine_learning_model/trained_model'
+        self.filename1 = 'machine_learning_model/final_model_covs_and_embedded'
+        self.filename2 = 'machine_learning_model/final_model_covs_only'
         self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, 'rb'))
         self.trained_model_covs_only = pickle.load(open(self.filename2, 'rb'))
+        
+        # Training Mean and Standard Deviation for Normalization
+        self.train_mean = 0
+        self.train_std = 1
         
         # Item Embeddings
         self.item0embedding = 'data/item0embedding'
@@ -62,11 +66,7 @@ class Agent(object):
         self._process_last_sale(last_sale, profit_each_team)
         
         # TEAM SVM CODE STARTS HERE
-        print("reached here")
-        print(type(new_buyer_covariates))
-        print(new_buyer_covariates)
-        covs_norm = self.normalize(new_buyer_covariates)
-        covs = [covs_norm['Covariate 1'], covs_norm['Covariate 2'], covs_norm['Covariate 3']]
+        covs= self.normalize(new_buyer_covariates)
         if new_buyer_embedding != None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -78,14 +78,8 @@ class Agent(object):
         # and to use the history of prices from each team in order to create prices for each item.
     
     def normalize(self, covariate):
-        scaler = preprocessing.StandardScaler()
-        x_scaled = scaler.fit_transform(covariate[['Covariate 1','Covariate 2','Covariate 3']])
-        covariate_normed = pd.DataFrame(x_scaled)
-        covariate_normed.insert(0,'user_index',covariate.index)
-        covariate_normed.rename(columns={0:'Covariate 1',1:'Covariate 2',2:'Covariate 3'},inplace=True)
-        covariate_normed.set_index('user_index',drop=True, inplace=True)
-        covariate_normed.index.name = None 
-        return covariate_normed
+        # z = (x - u) / s
+        return (covariate - self.train_mean) / self.train_std
     
     def get_user_item_vectors(self, user_vectors):
         items0 = np.dot(user_vectors, np.array(self.item0_embedding).T)
