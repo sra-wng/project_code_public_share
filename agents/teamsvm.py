@@ -90,14 +90,12 @@ class Agent(object):
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
-            p, r = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
+            prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_and_noisy, full_covs)
         else:
-            p, r = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
+            prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
         self.time = time.time() - self.time # end timer
+        return [self.alpha * p for p in prices]
         # TEAM SVM CODE ENDS HERE
-        
-        print(self.alpha, p)
-        return self.alpha * p
     
     def normalize_covs(self, covariate):
         # z = (x - u) / s
