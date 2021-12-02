@@ -96,6 +96,7 @@ class Agent(object):
         self.time = time.time() - self.time # end timer
         # TEAM SVM CODE ENDS HERE
         
+        print(self.alpha, p)
         return self.alpha * p
     
     def normalize_covs(self, covariate):
