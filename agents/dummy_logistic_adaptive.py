@@ -61,12 +61,10 @@ class Agent(object):
         # print("Which item customer bought: ", which_item_customer_bought)
         # print("Time to run last iteration: ", self.time)
 
-        # Simple strategy based on last purchase to increase or decrease alpha
-        if self.iter == 1 and did_customer_buy_from_opponent:
-            i = which_item_customer_bought
-            self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.iter % 2 == 0:
-            self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
+        if did_customer_buy_from_me:  # can increase prices
+            self.alpha *= 1.1
+        else:  # should decrease prices
+            self.alpha *= 0.9
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
