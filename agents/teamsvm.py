@@ -41,7 +41,7 @@ class Agent(object):
 
         # competitor pricing strategy
         # self.alpha = 1
-        self.alphas = []
+        self.alphas = [1, 1] # dual alpha strategy
         self.opponent_alpha = 1
         self.my_prices = []
         self.opponent_prices = []
