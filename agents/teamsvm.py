@@ -84,7 +84,7 @@ class Agent(object):
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.05) else self.alpha
+            2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
         )
         
         # Learn my customer's prices
