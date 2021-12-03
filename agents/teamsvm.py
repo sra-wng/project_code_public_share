@@ -109,7 +109,12 @@ class Agent(object):
             )
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        return [self.alpha * p for p in prices]
+        prices = [self.alpha * p for p in prices]
+        # Malicious pricing 2% of the time to just be a jackass to people's code
+        if random.uniform(0, 1) < 0.02:
+            prices = [1000000000, 1000000000] if random.uniform(0, 1) >= 0.5 else [1000000000, 1000000000]
+            break
+        return prices
 
     def normalize_covs(self, covariate):
         # z = (x - u) / s
