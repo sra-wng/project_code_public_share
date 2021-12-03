@@ -106,7 +106,7 @@ class Agent(object):
                 else self.alphas[i] * 0.9
                 for i in range(2)
             ]
-            self.alphas = [1 if self.alphas[i] > 1 else self.alpha[i] for i in range(2)]
+            self.alphas = [1 if self.alphas[i] > 1 else self.alphas[i] for i in range(2)]
 
         # add forgiveness if the alpha goes too low
         self.alphas = [
