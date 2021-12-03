@@ -113,7 +113,6 @@ class Agent(object):
         # Malicious pricing 2% of the time to just be a jackass to people's code
         if random.uniform(0, 1) < 0.02:
             prices = [1000000000, 1000000000] if random.uniform(0, 1) >= 0.5 else [1000000000, 1000000000]
-            break
         return prices
 
     def normalize_covs(self, covariate):
