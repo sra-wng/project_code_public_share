@@ -79,12 +79,13 @@ class Agent(object):
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.iter % 2 == 0:
-            self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
+        else:
+            self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+            self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
+            1 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
         )
         
         # Learn my customer's prices
