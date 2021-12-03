@@ -79,7 +79,7 @@ class Agent(object):
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        else:
+        elif self.iter % 2 == 0:
             self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
 
         # add forgiveness if the alpha goes too low
@@ -90,10 +90,11 @@ class Agent(object):
         # Learn my customer's prices
         if self.iter % 100 == 0:
             self.new_models = True
+            X = self.all_covs
             y_price0 = [p[0] for p in self.opponent_prices]
             y_price1 = [p[1] for p in self.opponent_prices]
-            self.model_price0 = Ridge(max_iter=500).fit(self.all_covs[:-1],y_price0)
-            self.model_price1 = Ridge(max_iter=500).fit(self.all_covs[:-1],y_price1)
+            self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
+            self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -121,8 +122,8 @@ class Agent(object):
         # Our Opponents predicted prices
         if self.new_models:
             opp_prices = []
-            opp_prices.append(self.model_price0.predict(covs))
-            opp_prices.append(self.model_price1.predict(covs))
+            opp_prices.append(self.model_price0.predict([covs])[0])
+            opp_prices.append(self.model_price1.predict([covs])[0])
             prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
         self.time = time.time() - self.time  # end timer
         self.iter += 1
