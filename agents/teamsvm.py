@@ -119,18 +119,32 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
-        # Our Opponents predicted prices
-        if self.new_models:
-            opp_prices = []
-            opp_prices.append(self.model_price0.predict([covs])[0])
-            opp_prices.append(self.model_price1.predict([covs])[0])
-            prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
+        
+        # Fixed Pricing Defense
+        fixed = False
+        if all(x[0]==self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]):
+            prices[0] = self.opponent_prices[-1][0] - 0.01
+            fixed = True
+        if all(x[1]==self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]):
+            prices[1] = self.opponent_prices[-1][0] - 0.01
+            fixed = True
+        if not fixed:
+            # Our Opponents predicted prices
+            if self.new_models:
+                opp_prices = []
+                opp_prices.append(self.model_price0.predict([covs])[0])
+                opp_prices.append(self.model_price1.predict([covs])[0])
+                prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
+            
+            prices = [self.alpha * p for p in prices]
+        
+            # Malicious pricing 1% of the time to just be a jackass to people's code 
+            if random.uniform(0, 1) < 0.01:
+                prices = [1000000000, 1000000000]
+        
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        prices = [self.alpha * p for p in prices]
-        # Malicious pricing 1% of the time to just be a jackass to people's code 
-        if random.uniform(0, 1) < 0.01:
-            prices = [1000000000, 1000000000]
+        
         return prices
 
     def normalize_covs(self, covariate):
