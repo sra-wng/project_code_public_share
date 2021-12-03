@@ -7,6 +7,7 @@ import numpy as np
 import itertools
 import time
 
+
 class Agent(object):
     def __init__(self, agent_number, params={}):
         self.this_agent_number = agent_number  # index for this agent
@@ -25,7 +26,9 @@ class Agent(object):
 
         # Training Mean and Standard Deviation for Normalization
         self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
-        self.train_stds = np.array([0.9274842, 0.86229847, 0.72909165]) #variance = [0.86022694, 0.74355865, 0.53157464]
+        self.train_stds = np.array(
+            [0.9274842, 0.86229847, 0.72909165]
+        )  # variance = [0.86022694, 0.74355865, 0.53157464]
 
         # Item Embeddings
         self.item0_embedding = pickle.load(open("data/item0embedding", "rb"))
@@ -88,12 +91,12 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
-        
+
         prices = [self.alpha * p for p in prices]
-        
+
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        
+
         return prices
 
     def normalize_covs(self, covariate):
