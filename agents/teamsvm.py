@@ -122,12 +122,13 @@ class Agent(object):
         
         # Fixed Pricing Defense
         fixed = False
-        if all(x[0]==self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]):
-            prices[0] = self.opponent_prices[-1][0] - 0.01
-            fixed = True
-        if all(x[1]==self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]):
-            prices[1] = self.opponent_prices[-1][0] - 0.01
-            fixed = True
+        if len(self.opponent_prices) > 5:
+            if all(x[0]==self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]):
+                prices[0] = self.opponent_prices[-1][0] - 0.01
+                fixed = True
+            if all(x[1]==self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]):
+                prices[1] = self.opponent_prices[-1][0] - 0.01
+                fixed = True
         if not fixed:
             # Our Opponents predicted prices
             if self.new_models:
