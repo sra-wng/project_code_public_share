@@ -6,7 +6,7 @@ import numpy as np
 # Team SVM Libraries
 import itertools
 import time
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
 
 
 class Agent(object):
@@ -43,6 +43,8 @@ class Agent(object):
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
+        self.all_covs =[]
+        self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -84,6 +86,14 @@ class Agent(object):
         self.alpha = (
             2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.05) else self.alpha
         )
+        
+        # Learn my customer's prices
+        if self.iter % 100 == 0:
+            self.new_models = True
+            y_price0 = [p[0] for p in self.opponent_prices]
+            y_price1 = [p[1] for p in self.opponent_prices]
+            self.model_price0 = Ridge(max_iter=500).fit(self.all_covs[:-1],y_price0)
+            self.model_price1 = Ridge(max_iter=500).fit(self.all_covs[:-1],y_price1)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -96,6 +106,7 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
+        self.all_covs.append(covs)
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -107,12 +118,18 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
+        # Our Opponents predicted prices
+        if self.new_models:
+            opp_prices = []
+            opp_prices.append(self.model_price0.predict(covs))
+            opp_prices.append(self.model_price1.predict(covs))
+            prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
         self.time = time.time() - self.time  # end timer
         self.iter += 1
         prices = [self.alpha * p for p in prices]
-        # Malicious pricing 2% of the time to just be a jackass to people's code
-        if random.uniform(0, 1) < 0.02:
-            prices = [1000000000, 1000000000] if random.uniform(0, 1) >= 0.5 else [1000000000, 1000000000]
+        # Malicious pricing 1% of the time to just be a jackass to people's code 
+        if random.uniform(0, 1) < 0.01:
+            prices = [1000000000, 1000000000]
         return prices
 
     def normalize_covs(self, covariate):
