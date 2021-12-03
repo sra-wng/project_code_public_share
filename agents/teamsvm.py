@@ -27,9 +27,7 @@ class Agent(object):
 
         # Training Mean and Standard Deviation for Normalization
         self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
-        self.train_stds = np.array(
-            [0.9274842, 0.86229847, 0.72909165]
-        )  # variance = [0.86022694, 0.74355865, 0.53157464]
+        self.train_stds = np.array([0.9274842, 0.86229847, 0.72909165]) #variance = [0.86022694, 0.74355865, 0.53157464]
 
         # Item Embeddings
         self.item0_embedding = pickle.load(open("data/item0embedding", "rb"))
@@ -45,7 +43,7 @@ class Agent(object):
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
-        self.all_covs = []
+        self.all_covs =[]
         self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
@@ -86,19 +84,17 @@ class Agent(object):
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            2 * self.alpha
-            if (self.alpha < 0.5 and random.uniform(0, 1) < 0.05)
-            else self.alpha
+            2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.05) else self.alpha
         )
-
+        
         # Learn my customer's prices
         if self.iter % 100 == 0:
             self.new_models = True
             X = self.all_covs
             y_price0 = [p[0] for p in self.opponent_prices]
             y_price1 = [p[1] for p in self.opponent_prices]
-            self.model_price0 = Ridge(max_iter=500).fit(X, y_price0)
-            self.model_price1 = Ridge(max_iter=500).fit(X, y_price1)
+            self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
+            self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -123,40 +119,36 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
-
+            
+        prices = list(prices)
         # Fixed Pricing Defense
         fixed = False
         if len(self.opponent_prices) > 5:
-            if all(
-                x[0] == self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]
-            ):
-                prices[0] = self.opponent_prices[-1][0] - 0.01
+            if all(x[0]==self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]):
                 fixed = True
-            if all(
-                x[1] == self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]
-            ):
-                prices[1] = self.opponent_prices[-1][0] - 0.01
+                if prices[0] > self.opponent_prices[-1][0]:
+                    prices[0] = self.opponent_prices[-1][0] - 0.01
+            if all(x[1]==self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]):
                 fixed = True
+                if prices[1] > self.opponent_prices[-1][1]:
+                    prices[1] = self.opponent_prices[-1][1] - 0.01
         if not fixed:
             # Our Opponents predicted prices
             if self.new_models:
                 opp_prices = []
                 opp_prices.append(self.model_price0.predict([covs])[0])
                 opp_prices.append(self.model_price1.predict([covs])[0])
-                prices = [
-                    opp_prices[i] - 0.01 if p > opp_prices[i] else p
-                    for i, p in enumerate(prices)
-                ]
-
+                prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
+            
             prices = [self.alpha * p for p in prices]
-
-            # Malicious pricing 1% of the time to just be a jackass to people's code
+        
+            # Malicious pricing 1% of the time to just be a jackass to people's code 
             if random.uniform(0, 1) < 0.01:
                 prices = [1000000000, 1000000000]
-
+        
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-
+        
         return prices
 
     def normalize_covs(self, covariate):
