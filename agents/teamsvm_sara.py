@@ -47,7 +47,7 @@ class Agent(object):
         self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
-        # print("last_sale: ", last_sale)
+        print("last_sale: ", last_sale)
         # print("profit_each_team: ", profit_each_team)
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
