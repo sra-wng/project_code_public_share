@@ -122,10 +122,11 @@ class Agent(object):
             self.opponent_alpha_list.append(self.opponent_alpha_list)
 
             # confirm opponent increase their alpha after lose on purpose move
-            if self.lose_on_purpose and (self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]):
-                self.rev_sacrifice += 0.01 if self.rev_sacrifice < 1.3 else 0
-            else:
-                self.rev_sacrifice -= 0.02 if self.rev_sacrifice > 0 else 0
+            if self.lose_on_purpose:
+                if (self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]):
+                    self.rev_sacrifice += 0.01 if self.rev_sacrifice < 1.3 else 0
+                else:
+                    self.rev_sacrifice -= 0.02 if self.rev_sacrifice > 0.02 else 0
             
             # set base alpha as benevolent opponent alpha
             self.alpha = 1.03 * self.opponent_alpha
