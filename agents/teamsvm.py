@@ -39,6 +39,7 @@ class Agent(object):
 
         # competitor pricing strategy
         self.alpha = 1
+        self.opponent_alpha = 1
         self.my_prices = []
         self.opponent_prices = []
         self.agent_winner = []
@@ -74,27 +75,30 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
+        
+        self.opponent_alpha *= 1.1 if did_customer_buy_from_opponent else 0.9
 
         # Simple strategy based on last purchase to increase or decrease alpha
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.iter % 2 == 0:
-            self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
+        else:
+            self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+            self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            2 * self.alpha if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
+            1 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
         )
         
         # Learn my customer's prices
-        if self.iter % 100 == 0:
-            self.new_models = True
-            X = self.all_covs
-            y_price0 = [p[0] for p in self.opponent_prices]
-            y_price1 = [p[1] for p in self.opponent_prices]
-            self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
-            self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
+        # if self.iter % 100 == 0:
+        #     self.new_models = True
+        #     X = self.all_covs
+        #     y_price0 = [p[0] for p in self.opponent_prices]
+        #     y_price1 = [p[1] for p in self.opponent_prices]
+        #     self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
+        #     self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -133,12 +137,6 @@ class Agent(object):
                 if prices[1] > self.opponent_prices[-1][1]:
                     prices[1] = self.opponent_prices[-1][1] - 0.01
         if not fixed:
-            # Our Opponents predicted prices
-            if self.new_models:
-                opp_prices = []
-                opp_prices.append(self.model_price0.predict([covs])[0])
-                opp_prices.append(self.model_price1.predict([covs])[0])
-                prices = [opp_prices[i] - 0.01 if p>opp_prices[i] else p for i, p in enumerate(prices)]
             
             prices = [self.alpha * p for p in prices]
         
