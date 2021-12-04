@@ -61,9 +61,9 @@ class Agent(object):
             info = np.concatenate(
                 (
                     self.save_action,
-                    self.save_prices[:-1],
-                    self.save_covariates[:-1],
-                    self.save_embeddings[:-1],
+                    self.save_prices,
+                    self.save_covariates,
+                    self.save_embeddings,
                 )
             )
             time_stmp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
