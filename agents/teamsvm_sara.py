@@ -82,7 +82,9 @@ class Agent(object):
         self.item_purchased.append(which_item_customer_bought)
 
         # Simple strategy based on last purchase to increase or decrease alpha
-        if self.iter == 1 and did_customer_buy_from_opponent:
+        if self.iter == 1:
+            pass
+        elif self.iter == 2 and self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
         elif self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1: #opponent won the last two rounds aka they defected the last two rounds
