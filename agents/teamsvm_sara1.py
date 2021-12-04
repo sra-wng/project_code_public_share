@@ -40,33 +40,57 @@ class Agent(object):
         self.iter = 0
 
         # competitor pricing strategy
+        self.epsilon = 1e-6
         self.alpha = 1
+        # self.opponent_alpha = 1
+        self.winning_streak = 0
+        self.losing_streak = 0
+        self.positive_weights = [
+            1.2,
+            1.15,
+            1.1,
+            1.09,
+            1.08,
+            1.07,
+            1.06,
+            1.05,
+            1.05,
+            1.03,
+        ]
+        self.penalty_weights = [
+            0.8,
+            0.85,
+            0.9,
+            0.91,
+            0.92,
+            0.93,
+            0.94,
+            0.95,
+            0.96,
+            0.97,
+        ]
         self.my_prices = []
+        self.my_ideal_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
         self.all_covs = []
-        self.new_models = False
+        self.lose_on_purpose = False
         self.opponent_last_alpha = 1
+        self.lose_on_purpose_list = []
+        # self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
         # print("profit_each_team: ", profit_each_team)
-        
-        print('my last alpha:', self.alpha)
-
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
 
         my_last_prices = last_sale[2][self.this_agent_number]
         opponent_last_prices = last_sale[2][self.opponent_number]
 
-        did_customer_buy_from_me = (
-            last_sale[1] == self.this_agent_number
-        )  # if the last sale was us, we set customer_buy_from_me to true
-        did_customer_buy_from_opponent = (
-            last_sale[1] == self.opponent_number
-        )  # if the last sale was not us, we set customer_buy_from_them to true
+        did_customer_buy_from_me = last_sale[1] == self.this_agent_number
+        did_customer_buy_from_opponent = last_sale[1] == self.opponent_number
 
         which_item_customer_bought = last_sale[0]
 
@@ -85,55 +109,63 @@ class Agent(object):
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
 
-        if self.iter == 1: # do nothing on the first round
-            pass
-        else:
-          i = which_item_customer_bought
-          if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
-            self.alpha = (opponent_last_prices[i] / my_last_prices[i])
+        i = which_item_customer_bought
+
+        #update alpha in first round
+        if self.iter == 1 and did_customer_buy_from_opponent:
+            self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
+
+        #check if opponent increased their alpha if we lost on purpose last round
+        elif self.iter > 1 and self.lose_on_purpose_list[-1]:
             self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1:
-            # we won then lost
-            #self.alpha = (opponent_last_prices[i] / my_last_prices[i])
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 0:
-            # we lost then won
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 0:
-            # we won then won
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-            if self.opponent_last_alpha < 1:
-              self.alpha = self.opponent_last_alpha + 1
+            if self.opponent_last_alpha > 1:
+                print('opponent took the bait and increased alpha')
+            elif self.opponent_last_alpha < 1:
+                print('opponent decreased alpha')
             else:
-              self.alpha = self.opponent_last_alpha
-            
+                print('opponent alpha is the same')
+
+        elif not self.lose_on_purpose:
+            self.winning_streak = (
+                self.winning_streak + 1 if did_customer_buy_from_me else 0
+            )
+            self.winning_streak = (
+                len(self.positive_weights) - 1
+                if self.winning_streak > len(self.positive_weights) - 1
+                else self.winning_streak
+            )
+            self.losing_streak = (
+                self.losing_streak + 1 if did_customer_buy_from_me else 0
+            )
+            self.losing_streak = (
+                len(self.penalty_weights) - 1
+                if self.losing_streak > len(self.penalty_weights) - 1
+                else self.losing_streak
+            )
+            self.alpha *= (
+                self.positive_weights[self.winning_streak]
+                if did_customer_buy_from_me
+                else self.penalty_weights[self.losing_streak]
+            )
+        else:
+            self.alpha *= 1.05
+
+        self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            2 * self.alpha
-            if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
-            else self.alpha
+            0.75 if (self.alpha < 0.35 and random.uniform(0, 1) < 0.08) else self.alpha
         )
-        
-        if self.opponent_last_alpha > 1:
-          print('opponent alpha increased')
-        elif self.opponent_last_alpha < 1:
-          print('opponent alpha decreased')
-        else:
-          print('opponent alpha same')
 
-        print('my new alpha:', self.alpha)
 
         # Learn my customer's prices
-        if self.iter % 100 == 0:
-            self.new_models = True
-            X = self.all_covs
-            y_price0 = [p[0] for p in self.opponent_prices]
-            y_price1 = [p[1] for p in self.opponent_prices]
-            self.model_price0 = Ridge(max_iter=500).fit(X, y_price0)
-            self.model_price1 = Ridge(max_iter=500).fit(X, y_price1)
-
-        print('\n')
+        # if self.iter % 100 == 0:
+        #     self.new_models = True
+        #     X = self.all_covs
+        #     y_price0 = [p[0] for p in self.opponent_prices]
+        #     y_price1 = [p[1] for p in self.opponent_prices]
+        #     self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
+        #     self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -146,7 +178,7 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        self.all_covs.append(covs)
+        # self.all_covs.append(covs)
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -160,6 +192,7 @@ class Agent(object):
             )
 
         prices = list(prices)
+        self.my_ideal_prices.append(prices)
         # Fixed Pricing Defense
         fixed = False
         if len(self.opponent_prices) > 5:
@@ -168,29 +201,27 @@ class Agent(object):
             ):
                 fixed = True
                 if prices[0] > self.opponent_prices[-1][0]:
-                    prices[0] = self.opponent_prices[-1][0] - 0.01
+                    prices[0] = self.opponent_prices[-1][0] - self.epsilon
             if all(
                 x[1] == self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]
             ):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
-                    prices[1] = self.opponent_prices[-1][1] - 0.01
+                    prices[1] = self.opponent_prices[-1][1] - self.epsilon
         if not fixed:
-            # Our Opponents predicted prices
-            if self.new_models:
-                opp_prices = []
-                opp_prices.append(self.model_price0.predict([covs])[0])
-                opp_prices.append(self.model_price1.predict([covs])[0])
-                prices = [
-                    opp_prices[i] - 0.01 if p > opp_prices[i] else p
-                    for i, p in enumerate(prices)
-                ]
-
             prices = [self.alpha * p for p in prices]
-
-            # Malicious pricing 1% of the time to just be a jackass to people's code
-            if random.uniform(0, 1) < 0.01:
+            # Purposely lose low revenue items to improve alpha to our benefit
+            if (rev < 1.05) and self.alpha > 0.2:
+                self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
+            else:
+                self.lose_on_purpose = False
+                if rev > 1.95:  # 90% discount to make sure we capture these customers
+                    prices = [0.9 * p for p in prices]    
+            self.lose_on_purpose_list.append(self.lose_on_purpose)
+        
+        # Guard against negative prices
+        prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
