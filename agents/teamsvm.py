@@ -130,9 +130,9 @@ class Agent(object):
 
             # set base alpha as benevolent opponent alpha
             self.alpha = (
-                self.alpha
+                0.94 * self.alpha
                 if self.alpha > self.opponent_alpha
-                else 0.95 * self.opponent_alpha
+                else 0.94 * self.opponent_alpha
             )
 
         if self.iter == 1 and did_customer_buy_from_opponent:
@@ -217,13 +217,13 @@ class Agent(object):
         if not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
-            if rev < self.rev_sacrifice and self.alpha < 0.7:
+            if rev < self.rev_sacrifice and self.alpha < 0.8:
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
             else:
                 self.lose_on_purpose = False
-                if rev > 1.95:  # 90% discount to make sure we capture these customers
-                    prices = [0.9 * p for p in prices]
+                if rev > 1.95:  # 80% discount to make sure we capture these customers
+                    prices = [0.8 * p for p in prices]
 
         # Guard against negative prices
         prices = [self.epsilon if p <= 0 else p for p in prices]
