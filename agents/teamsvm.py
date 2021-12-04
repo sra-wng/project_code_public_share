@@ -27,7 +27,9 @@ class Agent(object):
 
         # Training Mean and Standard Deviation for Normalization
         self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
-        self.train_stds = np.array([0.9274842, 0.86229847, 0.72909165]) #variance = [0.86022694, 0.74355865, 0.53157464]
+        self.train_stds = np.array(
+            [0.9274842, 0.86229847, 0.72909165]
+        )  # variance = [0.86022694, 0.74355865, 0.53157464]
 
         # Item Embeddings
         self.item0_embedding = pickle.load(open("data/item0embedding", "rb"))
@@ -39,13 +41,39 @@ class Agent(object):
 
         # competitor pricing strategy
         self.alpha = 1
-        self.opponent_alpha = 1
+        # self.opponent_alpha = 1
+        self.winning_streak = 0
+        self.losing_streak = 0
+        self.positive_weights = [
+            1.2,
+            1.15,
+            1.1,
+            1.09,
+            1.08,
+            1.07,
+            1.06,
+            1.05,
+            1.05,
+            1.03,
+        ]
+        self.penalty_weights = [
+            0.8,
+            0.85,
+            0.9,
+            0.91,
+            0.92,
+            0.93,
+            0.94,
+            0.95,
+            0.96,
+            0.97,
+        ]
         self.my_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
-        self.all_covs =[]
-        self.new_models = False
+        self.all_covs = []
+        # self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
@@ -75,22 +103,40 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        
-        self.opponent_alpha *= 1.1 if did_customer_buy_from_opponent else 0.9
+
+        self.winning_streak = self.winning_streak + 1 if did_customer_buy_from_me else 0
+        self.winning_streak = (
+            len(self.positive_weights)
+            if self.winning_streak > len(self.positive_weights)
+            else self.winning_streak
+        )
+        self.losing_streak = self.losing_streak + 1 if did_customer_buy_from_me else 0
+        self.losing_streak = (
+            len(self.penalty_weights)
+            if self.losing_streak > len(self.penalty_weights)
+            else self.losing_streak
+        )
+
+        # self.opponent_alpha *= 1.1 if did_customer_buy_from_opponent else 0.9
 
         # Simple strategy based on last purchase to increase or decrease alpha
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
         else:
-            self.alpha *= 1.1 if did_customer_buy_from_me else 0.9
+
+            self.alpha *= (
+                self.positive_weights[self.winning_streak]
+                if did_customer_buy_from_me
+                else self.penalty_weights[self.losing_streak]
+            )
             self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
-        self.alpha = (
-            1 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
-        )
-        
+        # self.alpha = (
+        #     1 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
+        # )
+
         # Learn my customer's prices
         # if self.iter % 100 == 0:
         #     self.new_models = True
@@ -123,30 +169,34 @@ class Agent(object):
             prices, rev = self.find_optimal_revenue_fast(
                 self.trained_model_covs_only, covs
             )
-            
+
         prices = list(prices)
         # Fixed Pricing Defense
         fixed = False
         if len(self.opponent_prices) > 5:
-            if all(x[0]==self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]):
+            if all(
+                x[0] == self.opponent_prices[-1][0] for x in self.opponent_prices[-3:]
+            ):
                 fixed = True
                 if prices[0] > self.opponent_prices[-1][0]:
                     prices[0] = self.opponent_prices[-1][0] - 0.01
-            if all(x[1]==self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]):
+            if all(
+                x[1] == self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]
+            ):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
                     prices[1] = self.opponent_prices[-1][1] - 0.01
         if not fixed:
-            
+
             prices = [self.alpha * p for p in prices]
-        
-            # Malicious pricing 1% of the time to just be a jackass to people's code 
+
+            # Malicious pricing 1% of the time to just be a jackass to people's code
             if random.uniform(0, 1) < 0.01:
                 prices = [1000000000, 1000000000]
-        
+
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        
+
         return prices
 
     def normalize_covs(self, covariate):
