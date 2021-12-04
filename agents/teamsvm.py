@@ -194,13 +194,15 @@ class Agent(object):
             prices = [self.alpha * p for p in prices]
 
             # Purposely lose low revenue items to improve alpha to our benefit
-            if rev < 1.15:
+            if (rev < 1.1) and self.alpha > 0.2:
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
             if rev > 2: # 90% discount to make sure we capture these customers
                 prices = [0.9 * p for p in prices]
             else:
                 self.lose_on_purpose = False
+                if rev > 1.9:  # 90% discount to make sure we capture these customers
+                    prices = [0.9 * p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
