@@ -49,7 +49,7 @@ class Agent(object):
         self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
-        #print("last_sale: ", last_sale)
+        # print("last_sale: ", last_sale)
         # print("profit_each_team: ", profit_each_team)
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
@@ -84,10 +84,14 @@ class Agent(object):
         # Simple strategy based on last purchase to increase or decrease alpha
         if self.iter == 1:
             pass
-        elif self.iter == 2 and self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
+        elif (
+            self.iter == 2 and self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1
+        ):
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1: #opponent won the last two rounds aka they defected the last two rounds
+        elif (
+            self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1
+        ):  # opponent won the last two rounds aka they defected the last two rounds
             i = which_item_customer_bought
             self.alpha = (opponent_last_prices[i] / my_last_prices[i]) - 0.05
         elif self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1: #we've only lost one round - do nothing
