@@ -54,7 +54,7 @@ class Agent(object):
 
         which_item_customer_bought = last_sale[0]
 
-        self.save_action(last_sale[0])
+        self.save_action.append(last_sale[0])
 
         if iter % 500 == 0:
 
