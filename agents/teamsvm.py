@@ -44,8 +44,30 @@ class Agent(object):
         # self.opponent_alpha = 1
         self.winning_streak = 0
         self.losing_streak = 0
-        self.positive_weights = [1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5]
-        self.penalty_weights = [0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.5]
+        self.positive_weights = [
+            1.2,
+            1.15,
+            1.1,
+            1.09,
+            1.08,
+            1.07,
+            1.06,
+            1.05,
+            1.05,
+            1.03,
+        ]
+        self.penalty_weights = [
+            0.8,
+            0.85,
+            0.9,
+            0.91,
+            0.92,
+            0.93,
+            0.94,
+            0.95,
+            0.96,
+            0.97,
+        ]
         self.my_prices = []
         self.opponent_prices = []
         self.agent_winner = []
@@ -83,9 +105,17 @@ class Agent(object):
         self.item_purchased.append(which_item_customer_bought)
 
         self.winning_streak = self.winning_streak + 1 if did_customer_buy_from_me else 0
-        self.winning_streak = 9 if self.winning_streak > 9 else self.winning_streak
+        self.winning_streak = (
+            len(self.winning_streak)
+            if self.winning_streak > len(self.winning_streak)
+            else self.winning_streak
+        )
         self.losing_streak = self.losing_streak + 1 if did_customer_buy_from_me else 0
-        self.losing_streak = 9 if self.losing_streak > 9 else self.losing_streak
+        self.losing_streak = (
+            len(self.losing_streak)
+            if self.losing_streak > len(self.losing_streak)
+            else self.losing_streak
+        )
 
         # self.opponent_alpha *= 1.1 if did_customer_buy_from_opponent else 0.9
 
