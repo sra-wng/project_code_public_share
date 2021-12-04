@@ -85,7 +85,7 @@ class Agent(object):
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.iter % 2 == 0:
+        elif self.agent_winner[-1] == 1 and self.agent_winner[-2] == 1: #opponent won the last two rounds aka they defected the last two rounds
             self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
 
         # add forgiveness if the alpha goes too low
