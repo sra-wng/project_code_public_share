@@ -88,7 +88,8 @@ class Agent(object):
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
         elif self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1: #opponent won the last two rounds aka they defected the last two rounds
-            self.alpha *= 0.8
+            i = which_item_customer_bought
+            self.alpha = opponent_last_prices[i] / my_last_prices[i]
         elif self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1: #we've only lost one round - do nothing
             pass
         elif self.agent_winner[-1] == 0: #increase alpha if we won the last one
