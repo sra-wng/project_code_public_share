@@ -73,6 +73,7 @@ class Agent(object):
         self.agent_winner = []
         self.item_purchased = []
         self.all_covs = []
+        self.lose_on_purpose = False
         # self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
@@ -123,7 +124,7 @@ class Agent(object):
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        else:
+        elif not self.lose_on_purpose:
 
             self.alpha *= (
                 self.positive_weights[self.winning_streak]
@@ -132,12 +133,12 @@ class Agent(object):
             )
             self.alpha = 1 if self.alpha > 1 else self.alpha
 
-        # # add forgiveness if the alpha goes too low
-        # self.alpha = (
-        #     self.alpha * 2
-        #     if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
-        #     else self.alpha
-        # )
+        # add forgiveness if the alpha goes too low
+        self.alpha = (
+            0.7
+            if (self.alpha < 0.4 and random.uniform(0, 1) < 0.10)
+            else self.alpha
+        )
 
         # Learn my customer's prices
         # if self.iter % 100 == 0:
@@ -193,8 +194,11 @@ class Agent(object):
             prices = [self.alpha * p for p in prices]
 
             # Purposely lose low revenue items to improve alpha to our benefit
-            if rev < 1.15:
+            if rev < 1.1:
+                self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
+            else:
+                self.lose_on_purpose = False
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
