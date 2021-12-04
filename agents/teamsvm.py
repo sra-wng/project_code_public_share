@@ -132,12 +132,12 @@ class Agent(object):
             )
             self.alpha = 1 if self.alpha > 1 else self.alpha
 
-        # add forgiveness if the alpha goes too low
-        self.alpha = (
-            self.alpha * 2
-            if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
-            else self.alpha
-        )
+        # # add forgiveness if the alpha goes too low
+        # self.alpha = (
+        #     self.alpha * 2
+        #     if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
+        #     else self.alpha
+        # )
 
         # Learn my customer's prices
         # if self.iter % 100 == 0:
@@ -192,8 +192,8 @@ class Agent(object):
 
             prices = [self.alpha * p for p in prices]
 
-            # Malicious pricing 1% of the time to just be a jackass to people's code
-            if random.uniform(0, 1) < 0.01:
+            # Purposely lose low revenue items to improve alpha to our benefit
+            if rev < 1.15:
                 prices = [1000000000, 1000000000]
 
         self.time = time.time() - self.time  # end timer
