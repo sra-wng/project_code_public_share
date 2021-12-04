@@ -107,15 +107,15 @@ class Agent(object):
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
         
-        # determine opponents alpha
+        # determine opponents estimated alpha from last 7 turns
         opp_prices_no_outliers = []
         for p in self.opponent_prices:
             if (0 <= p[0] <= 5) and (0 <= p[1] <= 5):
                 opp_prices_no_outliers.append(p)
-        opp_price_mean = np.mean(opp_prices_no_outliers, axis = 1)
-        my_ideal_price_mean = np.mean(self.my_ideal_prices, axis = 1)
-        self.opponent_alpha = np.mean(np.mean(opp_price_mean/my_ideal_price_mean, axis = 1))
-        print("ALPHAS: ",self.alpha, self.opponent_alpha)
+        if len(opp_prices_no_outliers) > 7:
+          opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis = 0)
+          my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis = 0)
+          self.opponent_alpha = np.mean(opp_price_mean/my_ideal_price_mean, axis = 0)
 
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
