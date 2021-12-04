@@ -133,9 +133,11 @@ class Agent(object):
             self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
-        # self.alpha = (
-        #     1 if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10) else self.alpha
-        # )
+        self.alpha = (
+            self.alpha * 2
+            if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
+            else self.alpha
+        )
 
         # Learn my customer's prices
         # if self.iter % 100 == 0:
