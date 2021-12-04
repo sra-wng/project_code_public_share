@@ -111,19 +111,21 @@ class Agent(object):
 
         i = which_item_customer_bought
 
-        #update alpha in first round
+        # update alpha in first round
         if self.iter == 1 and did_customer_buy_from_opponent:
             self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
 
-        #check if opponent increased their alpha this round if we lost on purpose in the previous round
+        # check if opponent increased their alpha this round if we lost on purpose in the previous round
         elif self.iter > 1 and self.lose_on_purpose_list[-2]:
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
+            self.opponent_last_alpha = (
+                opponent_last_prices[i] / self.opponent_prices[-2][i]
+            )
             if self.opponent_last_alpha > 1:
-                print('opponent took the bait and increased alpha')
+                print("opponent took the bait and increased alpha")
             elif self.opponent_last_alpha < 1:
-                print('opponent decreased alpha')
+                print("opponent decreased alpha")
             else:
-                print('opponent alpha is the same')
+                print("opponent alpha is the same")
 
         elif not self.lose_on_purpose:
             self.winning_streak = (
@@ -156,7 +158,6 @@ class Agent(object):
         self.alpha = (
             0.75 if (self.alpha < 0.35 and random.uniform(0, 1) < 0.08) else self.alpha
         )
-
 
         # Learn my customer's prices
         # if self.iter % 100 == 0:
@@ -217,9 +218,9 @@ class Agent(object):
             else:
                 self.lose_on_purpose = False
                 if rev > 1.95:  # 90% discount to make sure we capture these customers
-                    prices = [0.9 * p for p in prices]    
+                    prices = [0.9 * p for p in prices]
             self.lose_on_purpose_list.append(self.lose_on_purpose)
-        
+
         # Guard against negative prices
         prices = [self.epsilon if p <= 0 else p for p in prices]
 

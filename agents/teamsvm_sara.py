@@ -52,8 +52,8 @@ class Agent(object):
     def _process_last_sale(self, last_sale, profit_each_team):
         # print("last_sale: ", last_sale)
         # print("profit_each_team: ", profit_each_team)
-        
-        print('my last alpha:', self.alpha)
+
+        print("my last alpha:", self.alpha)
 
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
@@ -85,28 +85,35 @@ class Agent(object):
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
 
-        if self.iter == 1: # do nothing on the first round
+        if self.iter == 1:  # do nothing on the first round
             pass
         else:
-          i = which_item_customer_bought
-          if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
-            self.alpha = (opponent_last_prices[i] / my_last_prices[i])
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1:
-            # we won then lost
-            #self.alpha = (opponent_last_prices[i] / my_last_prices[i])
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 0:
-            # we lost then won
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-          if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 0:
-            # we won then won
-            self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
-            if self.opponent_last_alpha < 1:
-              self.alpha = self.opponent_last_alpha + 1
-            else:
-              self.alpha = self.opponent_last_alpha
-            
+            i = which_item_customer_bought
+            if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
+                self.alpha = opponent_last_prices[i] / my_last_prices[i]
+                self.opponent_last_alpha = (
+                    opponent_last_prices[i] / self.opponent_prices[-2][i]
+                )
+            if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1:
+                # we won then lost
+                # self.alpha = (opponent_last_prices[i] / my_last_prices[i])
+                self.opponent_last_alpha = (
+                    opponent_last_prices[i] / self.opponent_prices[-2][i]
+                )
+            if self.agent_winner[-2] == 1 and self.agent_winner[-1] == 0:
+                # we lost then won
+                self.opponent_last_alpha = (
+                    opponent_last_prices[i] / self.opponent_prices[-2][i]
+                )
+            if self.agent_winner[-2] == 0 and self.agent_winner[-1] == 0:
+                # we won then won
+                self.opponent_last_alpha = (
+                    opponent_last_prices[i] / self.opponent_prices[-2][i]
+                )
+                if self.opponent_last_alpha < 1:
+                    self.alpha = self.opponent_last_alpha + 1
+                else:
+                    self.alpha = self.opponent_last_alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
@@ -114,15 +121,15 @@ class Agent(object):
             if (self.alpha < 0.5 and random.uniform(0, 1) < 0.10)
             else self.alpha
         )
-        
-        if self.opponent_last_alpha > 1:
-          print('opponent alpha increased')
-        elif self.opponent_last_alpha < 1:
-          print('opponent alpha decreased')
-        else:
-          print('opponent alpha same')
 
-        print('my new alpha:', self.alpha)
+        if self.opponent_last_alpha > 1:
+            print("opponent alpha increased")
+        elif self.opponent_last_alpha < 1:
+            print("opponent alpha decreased")
+        else:
+            print("opponent alpha same")
+
+        print("my new alpha:", self.alpha)
 
         # Learn my customer's prices
         if self.iter % 100 == 0:
@@ -133,7 +140,7 @@ class Agent(object):
             self.model_price0 = Ridge(max_iter=500).fit(X, y_price0)
             self.model_price1 = Ridge(max_iter=500).fit(X, y_price1)
 
-        print('\n')
+        print("\n")
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None

@@ -96,18 +96,18 @@ class Agent(object):
             )
 
         prices = [self.alpha * p for p in prices]
-        
+
         # Offer a sale 5% of the time for 5 consecutive turns
-        if (not self.sale) and (random.uniform(0, 1) < 0.05): # begin sale
+        if (not self.sale) and (random.uniform(0, 1) < 0.05):  # begin sale
             self.sale = True
-        
+
         if self.sale and (self.sale_iter <= 5):
             prices = [0.25 if p > 0.25 else p for p in prices]
             self.sale_iter += 1
         else:
             self.sale = False
             self.sale_iter = 0
-            
+
         # Guard against negative prices
         prices = [self.epsilon if p <= 0 else p for p in prices]
 

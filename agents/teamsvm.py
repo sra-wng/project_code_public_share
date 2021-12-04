@@ -109,55 +109,59 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        
+
         # determine opponents estimated alpha from last 7 turns
         opp_prices_no_outliers = []
         for p in self.opponent_prices:
             if (0 <= p[0] <= 5) and (0 <= p[1] <= 5):
                 opp_prices_no_outliers.append(p)
         if len(opp_prices_no_outliers) > 7:
-            opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis = 0)
-            my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis = 0)
-            self.opponent_alpha = np.mean(opp_price_mean/my_ideal_price_mean, axis = 0)
-            self.opponent_alpha_list.append(self.opponent_alpha_list)
+            opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis=0)
+            my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis=0)
+            self.opponent_alpha = np.mean(opp_price_mean / my_ideal_price_mean, axis=0)
+            self.opponent_alpha_list.append(self.opponent_alpha)
 
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
-                if (self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]):
-                    self.rev_sacrifice += 0.01 if self.rev_sacrifice < 1.3 else 0
+                if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
+                    self.rev_sacrifice += 0.01 if self.rev_sacrifice < 1.25 else 0
                 else:
                     self.rev_sacrifice -= 0.02 if self.rev_sacrifice > 0.02 else 0
-            
+
             # set base alpha as benevolent opponent alpha
-            self.alpha = 1.03 * self.opponent_alpha
-        
+            self.alpha = (
+                self.alpha
+                if self.alpha > self.opponent_alpha
+                else 0.95 * self.opponent_alpha
+            )
 
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
 
         elif not self.lose_on_purpose:
-            self.winning_streak = (
-                self.winning_streak + 1 if did_customer_buy_from_me else 0
-            )
-            self.winning_streak = (
-                len(self.positive_weights) - 1
-                if self.winning_streak > len(self.positive_weights) - 1
-                else self.winning_streak
-            )
-            self.losing_streak = (
-                self.losing_streak + 1 if did_customer_buy_from_me else 0
-            )
-            self.losing_streak = (
-                len(self.penalty_weights) - 1
-                if self.losing_streak > len(self.penalty_weights) - 1
-                else self.losing_streak
-            )
-            self.alpha *= (
-                self.positive_weights[self.winning_streak]
-                if did_customer_buy_from_me
-                else self.penalty_weights[self.losing_streak]
-            )
+            # self.winning_streak = (
+            #     self.winning_streak + 1 if did_customer_buy_from_me else 0
+            # )
+            # self.winning_streak = (
+            #     len(self.positive_weights) - 1
+            #     if self.winning_streak > len(self.positive_weights) - 1
+            #     else self.winning_streak
+            # )
+            # self.losing_streak = (
+            #     self.losing_streak + 1 if did_customer_buy_from_me else 0
+            # )
+            # self.losing_streak = (
+            #     len(self.penalty_weights) - 1
+            #     if self.losing_streak > len(self.penalty_weights) - 1
+            #     else self.losing_streak
+            # )
+            # self.alpha *= (
+            #     self.positive_weights[self.winning_streak]
+            #     if did_customer_buy_from_me
+            #     else self.penalty_weights[self.losing_streak]
+            # )
+            self.alpha *= 1.15 if did_customer_buy_from_me else 0.95
         else:
             self.alpha *= 1.05
 
@@ -213,20 +217,28 @@ class Agent(object):
         if not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
-            if (rev < self.rev_sacrifice):
+            if rev < self.rev_sacrifice and self.alpha < 0.7:
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
             else:
                 self.lose_on_purpose = False
                 if rev > 1.95:  # 90% discount to make sure we capture these customers
                     prices = [0.9 * p for p in prices]
-        
+
         # Guard against negative prices
         prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
 
+        print(
+            "My alpha: ",
+            self.alpha,
+            "Opponent Alpha: ",
+            self.opponent_alpha,
+            "Sacrifice Level: ",
+            self.rev_sacrifice,
+        )
         return prices
 
     def normalize_covs(self, covariate):
