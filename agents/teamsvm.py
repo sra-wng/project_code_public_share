@@ -41,8 +41,11 @@ class Agent(object):
 
         # competitor pricing strategy
         self.epsilon = 1e-6
+        self.rev_sacrifice = 1.05
         self.alpha = 1
+        self.alpha_list = []
         self.opponent_alpha = 1
+        self.opponent_alpha_list = []
         self.winning_streak = 0
         self.losing_streak = 0
         self.positive_weights = [
@@ -116,6 +119,15 @@ class Agent(object):
           opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis = 0)
           my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis = 0)
           self.opponent_alpha = np.mean(opp_price_mean/my_ideal_price_mean, axis = 0)
+          self.opponent_alpha_list.append(self.opponent_alpha_list)
+          
+          if self.lose_on_purpose and (self.iter > 3):
+            # opponent increase their alpha after lose on purpose move
+            if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
+                if self.rev_sacrifice < 1.3:
+                    self.rev_sacrifice += 0.01
+            elif self.rev_sacrifice > 0:
+                    self.rev_sacrifice -= 0.02
 
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
@@ -152,15 +164,7 @@ class Agent(object):
         self.alpha = (
             0.75 if (self.alpha < 0.35 and random.uniform(0, 1) < 0.08) else self.alpha
         )
-
-        # Learn my customer's prices
-        # if self.iter % 100 == 0:
-        #     self.new_models = True
-        #     X = self.all_covs
-        #     y_price0 = [p[0] for p in self.opponent_prices]
-        #     y_price1 = [p[1] for p in self.opponent_prices]
-        #     self.model_price0 = Ridge(max_iter=500).fit(X,y_price0)
-        #     self.model_price1 = Ridge(max_iter=500).fit(X,y_price1)
+        self.alpha_list.append(self.alpha)
 
     # Given an observation which is #info for new buyer, information for last iteration, and current profit from each time
     # Covariates of the current buyer, and potentially embedding. Embedding may be None
@@ -206,7 +210,7 @@ class Agent(object):
         if not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
-            if (rev < 1.05) and self.alpha > 0.2:
+            if (rev < self.rev_sacrifice):
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
             else:
