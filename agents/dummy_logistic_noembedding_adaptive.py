@@ -19,7 +19,7 @@ class Agent(object):
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
 
-        self.filename1= "machine_learning_model/final_model_covs_only"
+        self.filename1 = "machine_learning_model/final_model_covs_only"
         self.trained_model_covs_only = pickle.load(open(self.filename1, "rb"))
 
         # Training Mean and Standard Deviation for Normalization
@@ -42,7 +42,7 @@ class Agent(object):
     def _process_last_sale(self, last_sale, profit_each_team):
 
         did_customer_buy_from_me = last_sale[1] == self.this_agent_number
-        
+
         if did_customer_buy_from_me:  # can increase prices
             self.alpha *= 1.1
         else:  # should decrease prices
@@ -59,9 +59,7 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        prices, rev = self.find_optimal_revenue_fast(
-                self.trained_model_covs_only, covs
-            )
+        prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
 
         prices = [self.alpha * p for p in prices]
 

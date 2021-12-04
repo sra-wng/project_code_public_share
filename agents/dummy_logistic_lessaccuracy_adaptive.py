@@ -19,10 +19,8 @@ class Agent(object):
         # However, this does not work with custom defined classes, due to the way pickle operates
         # TODO you can replace this with your own model
 
-        self.filename1 = "machine_learning_model/final_model_covs_and_noisy"
-        self.filename2 = "machine_learning_model/final_model_covs_only"
-        self.trained_model_covs_and_noisy = pickle.load(open(self.filename1, "rb"))
-        self.trained_model_covs_only = pickle.load(open(self.filename2, "rb"))
+        self.filename1 = "machine_learning_model/final_model_covs_only"
+        self.trained_model_covs_only = pickle.load(open(self.filename1, "rb"))
 
         # Training Mean and Standard Deviation for Normalization
         self.train_means = np.array([0.00534622, 0.00412864, 0.00322634])
@@ -40,32 +38,10 @@ class Agent(object):
 
         # competitor pricing strategy
         self.alpha = 1
-        self.epsilon = 1e-6
-        self.sale = False
-        self.sale_iter = 0
 
     def _process_last_sale(self, last_sale, profit_each_team):
-        # print("last_sale: ", last_sale)
-        # print("profit_each_team: ", profit_each_team)
-        my_current_profit = profit_each_team[self.this_agent_number]
-        opponent_current_profit = profit_each_team[self.opponent_number]
-
-        my_last_prices = last_sale[2][self.this_agent_number]
-        opponent_last_prices = last_sale[2][self.opponent_number]
 
         did_customer_buy_from_me = last_sale[1] == self.this_agent_number
-        did_customer_buy_from_opponent = last_sale[1] == self.opponent_number
-
-        which_item_customer_bought = last_sale[0]
-
-        # print("My current profit: ", my_current_profit)
-        # print("Opponent current profit: ", opponent_current_profit)
-        # print("My last prices: ", my_last_prices)
-        # print("Opponent last prices: ", opponent_last_prices)
-        # print("Did customer buy from me: ", did_customer_buy_from_me)
-        # print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
-        # print("Which item customer bought: ", which_item_customer_bought)
-        # print("Time to run last iteration: ", self.time)
 
         if did_customer_buy_from_me:  # can increase prices
             self.alpha *= 1.1
@@ -83,33 +59,9 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        if new_buyer_embedding is not None:
-            vector = self.get_user_item_vectors(new_buyer_embedding)
-            full_covs = np.concatenate((covs, vector))
-            prices, rev = self.find_optimal_revenue_fast(
-                self.trained_model_covs_and_noisy, full_covs
-            )
-        else:
-            self.last_full_covs = None
-            prices, rev = self.find_optimal_revenue_fast(
-                self.trained_model_covs_only, covs
-            )
+        prices, rev = self.find_optimal_revenue_fast(self.trained_model_covs_only, covs)
 
         prices = [self.alpha * p for p in prices]
-        
-        # Offer a sale 5% of the time for 5 consecutive turns
-        if (not self.sale) and (random.uniform(0, 1) < 0.05): # begin sale
-            self.sale = True
-        
-        if self.sale and (self.sale_iter <= 5):
-            prices = [0.25 if p > 0.25 else p for p in prices]
-            self.sale_iter += 1
-        else:
-            self.sale = False
-            self.sale_iter = 0
-            
-        # Guard against negative prices
-        prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
