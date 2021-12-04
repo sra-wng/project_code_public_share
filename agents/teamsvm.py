@@ -105,39 +105,39 @@ class Agent(object):
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
 
-        self.winning_streak = self.winning_streak + 1 if did_customer_buy_from_me else 0
-        self.winning_streak = (
-            len(self.positive_weights)
-            if self.winning_streak > len(self.positive_weights)
-            else self.winning_streak
-        )
-        self.losing_streak = self.losing_streak + 1 if did_customer_buy_from_me else 0
-        self.losing_streak = (
-            len(self.penalty_weights)
-            if self.losing_streak > len(self.penalty_weights)
-            else self.losing_streak
-        )
-
-        # self.opponent_alpha *= 1.1 if did_customer_buy_from_opponent else 0.9
-
-        # Simple strategy based on last purchase to increase or decrease alpha
-        if self.iter == 1 and did_customer_buy_from_opponent:
-            i = which_item_customer_bought
-            self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif not self.lose_on_purpose:
-
+        if not self.lose_on_purpose:
+            self.winning_streak = (
+                self.winning_streak + 1 if did_customer_buy_from_me else 0
+            )
+            self.winning_streak = (
+                len(self.positive_weights) - 1
+                if self.winning_streak > len(self.positive_weights) - 1
+                else self.winning_streak
+            )
+            self.losing_streak = (
+                self.losing_streak + 1 if did_customer_buy_from_me else 0
+            )
+            self.losing_streak = (
+                len(self.penalty_weights) - 1
+                if self.losing_streak > len(self.penalty_weights) - 1
+                else self.losing_streak
+            )
+            if self.iter == 1 and did_customer_buy_from_opponent:
+                i = which_item_customer_bought
+                self.alpha = opponent_last_prices[i] / my_last_prices[i]
             self.alpha *= (
                 self.positive_weights[self.winning_streak]
                 if did_customer_buy_from_me
                 else self.penalty_weights[self.losing_streak]
             )
-            self.alpha = 1 if self.alpha > 1 else self.alpha
+        else:
+            self.alpha *= 1.2
+
+        self.alpha = 1 if self.alpha > 1 else self.alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
-            0.7
-            if (self.alpha < 0.4 and random.uniform(0, 1) < 0.10)
-            else self.alpha
+            0.75 if (self.alpha < 0.35 and random.uniform(0, 1) < 0.08) else self.alpha
         )
 
         # Learn my customer's prices
@@ -160,7 +160,7 @@ class Agent(object):
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        self.all_covs.append(covs)
+        # self.all_covs.append(covs)
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -194,13 +194,13 @@ class Agent(object):
             prices = [self.alpha * p for p in prices]
 
             # Purposely lose low revenue items to improve alpha to our benefit
-            if rev < 1.1:
+            if (rev < 1.1) and self.alpha > 0.2:
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
-            if rev > 2: # 80% discount to make sure we capture these customers
-                prices = [0.8 * p for p in prices]
             else:
                 self.lose_on_purpose = False
+                if rev > 1.9:  # 90% discount to make sure we capture these customers
+                    prices = [0.9 * p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
