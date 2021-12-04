@@ -69,6 +69,7 @@ class Agent(object):
             0.97,
         ]
         self.my_prices = []
+        self.my_ideal_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
@@ -104,8 +105,12 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
+        
+        if self.iter == 1 and did_customer_buy_from_opponent:
+            i = which_item_customer_bought
+            self.alpha = opponent_last_prices[i] / self.my_ideal_prices[i]
 
-        if not self.lose_on_purpose:
+        elif not self.lose_on_purpose:
             self.winning_streak = (
                 self.winning_streak + 1 if did_customer_buy_from_me else 0
             )
@@ -122,9 +127,6 @@ class Agent(object):
                 if self.losing_streak > len(self.penalty_weights) - 1
                 else self.losing_streak
             )
-            if self.iter == 1 and did_customer_buy_from_opponent:
-                i = which_item_customer_bought
-                self.alpha = opponent_last_prices[i] / my_last_prices[i]
             self.alpha *= (
                 self.positive_weights[self.winning_streak]
                 if did_customer_buy_from_me
@@ -174,6 +176,7 @@ class Agent(object):
             )
 
         prices = list(prices)
+        self.my_ideal_prices.append(prices)
         # Fixed Pricing Defense
         fixed = False
         if len(self.opponent_prices) > 5:
