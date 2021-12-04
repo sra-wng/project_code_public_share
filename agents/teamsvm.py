@@ -40,6 +40,7 @@ class Agent(object):
         self.iter = 0
 
         # competitor pricing strategy
+        self.epsilon = 10^-6
         self.alpha = 1
         # self.opponent_alpha = 1
         self.winning_streak = 0
@@ -185,13 +186,13 @@ class Agent(object):
             ):
                 fixed = True
                 if prices[0] > self.opponent_prices[-1][0]:
-                    prices[0] = self.opponent_prices[-1][0] - 0.01
+                    prices[0] = self.opponent_prices[-1][0] - self.epsilon
             if all(
                 x[1] == self.opponent_prices[-1][1] for x in self.opponent_prices[-3:]
             ):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
-                    prices[1] = self.opponent_prices[-1][1] - 0.01
+                    prices[1] = self.opponent_prices[-1][1] - self.epsilon
         if not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
@@ -202,6 +203,9 @@ class Agent(object):
                 self.lose_on_purpose = False
                 if rev > 1.95:  # 90% discount to make sure we capture these customers
                     prices = [0.9 * p for p in prices]
+        
+        # Guard against negative prices
+        prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
