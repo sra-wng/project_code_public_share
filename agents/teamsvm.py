@@ -116,18 +116,20 @@ class Agent(object):
             if (0 <= p[0] <= 5) and (0 <= p[1] <= 5):
                 opp_prices_no_outliers.append(p)
         if len(opp_prices_no_outliers) > 7:
-          opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis = 0)
-          my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis = 0)
-          self.opponent_alpha = np.mean(opp_price_mean/my_ideal_price_mean, axis = 0)
-          self.opponent_alpha_list.append(self.opponent_alpha_list)
-          
-          if self.lose_on_purpose and (self.iter > 3):
-            # opponent increase their alpha after lose on purpose move
-            if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
-                if self.rev_sacrifice < 1.3:
-                    self.rev_sacrifice += 0.01
-            elif self.rev_sacrifice > 0:
-                    self.rev_sacrifice -= 0.02
+            opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis = 0)
+            my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis = 0)
+            self.opponent_alpha = np.mean(opp_price_mean/my_ideal_price_mean, axis = 0)
+            self.opponent_alpha_list.append(self.opponent_alpha_list)
+
+            # confirm opponent increase their alpha after lose on purpose move
+            if self.lose_on_purpose and (self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]):
+                self.rev_sacrifice += 0.01 if self.rev_sacrifice < 1.3 else 0
+            else:
+                self.rev_sacrifice -= 0.02 if self.rev_sacrifice > 0 else 0
+            
+            # set base alpha as benevolent opponent alpha
+            self.alpha = 1.03 * self.opponent_alpha
+        
 
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
