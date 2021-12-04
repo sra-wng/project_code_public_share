@@ -115,8 +115,8 @@ class Agent(object):
         if self.iter == 1 and did_customer_buy_from_opponent:
             self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
 
-        #check if opponent increased their alpha if we lost on purpose last round
-        elif self.iter > 1 and self.lose_on_purpose_list[-1]:
+        #check if opponent increased their alpha this round if we lost on purpose in the previous round
+        elif self.iter > 1 and self.lose_on_purpose_list[-2]:
             self.opponent_last_alpha = opponent_last_prices[i] / self.opponent_prices[-2][i]
             if self.opponent_last_alpha > 1:
                 print('opponent took the bait and increased alpha')
