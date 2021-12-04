@@ -40,7 +40,7 @@ class Agent(object):
         self.iter = 0
 
         # competitor pricing strategy
-        self.epsilon = 10^-6
+        self.epsilon = 1e-6
         self.alpha = 1
         # self.opponent_alpha = 1
         self.winning_streak = 0
