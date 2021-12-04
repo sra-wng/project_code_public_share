@@ -106,14 +106,14 @@ class Agent(object):
 
         self.winning_streak = self.winning_streak + 1 if did_customer_buy_from_me else 0
         self.winning_streak = (
-            len(self.winning_streak)
-            if self.winning_streak > len(self.winning_streak)
+            len(self.positive_weights)
+            if self.winning_streak > len(self.positive_weights)
             else self.winning_streak
         )
         self.losing_streak = self.losing_streak + 1 if did_customer_buy_from_me else 0
         self.losing_streak = (
-            len(self.losing_streak)
-            if self.losing_streak > len(self.losing_streak)
+            len(self.penalty_weights)
+            if self.losing_streak > len(self.penalty_weights)
             else self.losing_streak
         )
 
