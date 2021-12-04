@@ -56,7 +56,7 @@ class Agent(object):
 
         self.save_action.append(last_sale[0])
 
-        if iter % 500 == 0:
+        if self.iter % 500 == 0:
 
             info = np.concatenate(
                 (
