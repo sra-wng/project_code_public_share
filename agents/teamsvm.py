@@ -105,7 +105,7 @@ class Agent(object):
         self.opponent_prices.append(opponent_last_prices)
         self.agent_winner.append(last_sale[1])
         self.item_purchased.append(which_item_customer_bought)
-        
+
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
@@ -133,7 +133,7 @@ class Agent(object):
                 else self.penalty_weights[self.losing_streak]
             )
         else:
-            self.alpha *= 1.2
+            self.alpha *= 1.05
 
         self.alpha = 1 if self.alpha > 1 else self.alpha
 
@@ -195,12 +195,12 @@ class Agent(object):
         if not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
-            if (rev < 1.1) and self.alpha > 0.2:
+            if (rev < 1.05) and self.alpha > 0.2:
                 self.lose_on_purpose = True
                 prices = [1000000000, 1000000000]
             else:
                 self.lose_on_purpose = False
-                if rev > 1.9: # 90% discount to make sure we capture these customers
+                if rev > 1.95:  # 90% discount to make sure we capture these customers
                     prices = [0.9 * p for p in prices]
 
         self.time = time.time() - self.time  # end timer
