@@ -49,7 +49,7 @@ class Agent(object):
         self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
-        print("last_sale: ", last_sale)
+        #print("last_sale: ", last_sale)
         # print("profit_each_team: ", profit_each_team)
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
@@ -82,11 +82,18 @@ class Agent(object):
         self.item_purchased.append(which_item_customer_bought)
 
         # Simple strategy based on last purchase to increase or decrease alpha
-        if self.iter == 1 and did_customer_buy_from_opponent:
+        if self.iter == 1:
+            pass
+        elif self.iter == 2 and self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1:
             i = which_item_customer_bought
             self.alpha = opponent_last_prices[i] / my_last_prices[i]
-        elif self.agent_winner[-1] == 1 and self.agent_winner[-2] == 1: #opponent won the last two rounds aka they defected the last two rounds
-            self.alpha *= 1.2 if did_customer_buy_from_me else 0.8
+        elif self.agent_winner[-2] == 1 and self.agent_winner[-1] == 1: #opponent won the last two rounds aka they defected the last two rounds
+            i = which_item_customer_bought
+            self.alpha = opponent_last_prices[i] / my_last_prices[i]
+        elif self.agent_winner[-2] == 0 and self.agent_winner[-1] == 1: #we've only lost one round - do nothing
+            pass
+        elif self.agent_winner[-1] == 0: #increase alpha if we won the last one
+            self.alpha *= 1.2
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
