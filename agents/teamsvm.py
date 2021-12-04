@@ -108,7 +108,7 @@ class Agent(object):
         
         if self.iter == 1 and did_customer_buy_from_opponent:
             i = which_item_customer_bought
-            self.alpha = opponent_last_prices[i] / self.my_ideal_prices[i]
+            self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
 
         elif not self.lose_on_purpose:
             self.winning_streak = (
