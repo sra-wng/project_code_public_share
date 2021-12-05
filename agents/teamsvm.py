@@ -172,7 +172,7 @@ class Agent(object):
         if self.illogical and (self.opp_price_mean != 0):
             l_price = 0.38 * self.opp_price_mean
             h_price = 0.42 * self.opp_price_mean
-            prices = [random.uniform(l_price, h_price, random.uniform(l_price, h_price)]
+            prices = [random.uniform(l_price, h_price), random.uniform(l_price, h_price)]
         elif not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
