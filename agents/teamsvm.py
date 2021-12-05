@@ -93,7 +93,7 @@ class Agent(object):
                         self.opponent_logic_list.append(True)
                     else:
                         self.opponent_logic_list.append(False)
-                    if self.opponent_prices[-1][0] >= self.opponent_prices[-1][-2]:
+                    if self.opponent_prices[-1][0] >= self.opponent_prices[-2][0]:
                         self.price_logic_list.append(True)
                     else:
                         self.price_logic_list.append(False)
@@ -102,7 +102,7 @@ class Agent(object):
                         self.opponent_logic_list.append(True)
                     else:
                         self.opponent_logic_list.append(False)
-                    if self.opponent_prices[-1][0] <= self.opponent_prices[-1][-2]:
+                    if self.opponent_prices[-1][0] <= self.opponent_prices[-2][0]:
                         self.price_logic_list.append(True)
                     else:
                         self.price_logic_list.append(False)
@@ -117,7 +117,7 @@ class Agent(object):
                         and (
                             sum(self.price_logic_list[-30:])
                             / len(self.price_logic_list[-30:])
-                            < 0.60
+                            < 0.85
                         )
                         else False
                     )
