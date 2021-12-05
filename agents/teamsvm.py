@@ -44,7 +44,7 @@ class Agent(object):
         self.opponent_alpha = 1
         self.opponent_alpha_list = []
         self.opponent_logic_list = []
-        self.opp_price_mean = 0
+        self.opp_price_mean = [0, 0]
         self.my_prices = []
         self.my_ideal_prices = []
         self.opponent_prices = []
@@ -176,12 +176,10 @@ class Agent(object):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
                     prices[1] = self.opponent_prices[-1][1] - self.epsilon
-        if self.illogical and (self.opp_price_mean != 0):
-            l_price = 0.38 * self.opp_price_mean
-            h_price = 0.42 * self.opp_price_mean
+        if self.illogical and (self.opp_price_mean.all() != 0):
             prices = [
-                random.uniform(l_price, h_price),
-                random.uniform(l_price, h_price),
+                random.uniform(0.38 * self.opp_price_mean[0], 0.42 * self.opp_price_mean[0]),
+                random.uniform(0.38 * self.opp_price_mean[1], 0.42 * self.opp_price_mean[1]),
             ]
         elif not fixed:
             prices = [self.alpha * p for p in prices]
