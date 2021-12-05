@@ -58,7 +58,7 @@ class Agent(object):
         v = -1 if math.isnan(last_sale[0]) else last_sale[0]
         self.save_action.append([v])
 
-        if self.iter % 50000 == 0:
+        if self.iter % 25000 == 0:
 
             info = np.concatenate(
                 [
