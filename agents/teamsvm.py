@@ -52,6 +52,8 @@ class Agent(object):
         self.item_purchased = []
         self.lose_on_purpose = False
         self.illogical = False
+        self.price_logic_list = []
+        self.fixed_addaptive_prices = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         my_current_profit = profit_each_team[self.this_agent_number]
@@ -91,17 +93,32 @@ class Agent(object):
                         self.opponent_logic_list.append(True)
                     else:
                         self.opponent_logic_list.append(False)
+                    if self.opponent_prices[-1][0] >= self.opponent_prices[-1][-2]:
+                        self.price_logic_list.append(True)
+                    else:
+                        self.price_logic_list.append(False)
                 else:
                     if self.opponent_alpha_list[-1] <= self.opponent_alpha_list[-2]:
                         self.opponent_logic_list.append(True)
                     else:
                         self.opponent_logic_list.append(False)
+                    if self.opponent_prices[-1][0] <= self.opponent_prices[-1][-2]:
+                        self.price_logic_list.append(True)
+                    else:
+                        self.price_logic_list.append(False)
                 if len(self.opponent_logic_list) > 30:
                     self.illogical = (
                         True
-                        if sum(self.opponent_logic_list[-30:])
-                        / len(self.opponent_logic_list[-30:])
-                        < 0.55
+                        if (
+                            sum(self.opponent_logic_list[-30:])
+                            / len(self.opponent_logic_list[-30:])
+                            < 0.60
+                        )
+                        and (
+                            sum(self.price_logic_list[-30:])
+                            / len(self.price_logic_list[-30:])
+                            < 0.60
+                        )
                         else False
                     )
 
@@ -178,8 +195,15 @@ class Agent(object):
                     prices[1] = self.opponent_prices[-1][1] - self.epsilon
         # Defense Against Random
         if self.illogical and (self.opp_price_mean.all() != 0):
-            new_p = [random.uniform(0.93 * self.opp_price_mean[0], 0.95 * self.opp_price_mean[0]), random.uniform(0.93 * self.opp_price_mean[1], 0.95 * self.opp_price_mean[1])]
-            prices = [new_p[i] if (new_p[i] < p) else p  for i, p in enumerate(prices)]
+            new_p = [
+                random.uniform(
+                    0.87 * self.opp_price_mean[0], 0.9 * self.opp_price_mean[0]
+                ),
+                random.uniform(
+                    0.87 * self.opp_price_mean[1], 0.9 * self.opp_price_mean[1]
+                ),
+            ]
+            prices = [new_p[i] if (new_p[i] < p) else p for i, p in enumerate(prices)]
         elif not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
