@@ -5,7 +5,6 @@ import numpy as np
 
 # Team SVM Libraries
 import itertools
-import time
 from sklearn.linear_model import Ridge
 
 
@@ -35,8 +34,6 @@ class Agent(object):
         self.item0_embedding = pickle.load(open("data/item0embedding", "rb"))
         self.item1_embedding = pickle.load(open("data/item1embedding", "rb"))
 
-        # time variable for tracking how fast our program runs
-        self.time = 0
         self.iter = 0
 
         # competitor pricing strategy
@@ -46,16 +43,13 @@ class Agent(object):
         self.alpha_list = []
         self.opponent_alpha = 1
         self.opponent_alpha_list = []
-        self.winning_streak = 0
-        self.losing_streak = 0
+        self.opponent_logic = []
         self.my_prices = []
         self.my_ideal_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
-        self.all_covs = []
         self.lose_on_purpose = False
-        # self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         my_current_profit = profit_each_team[self.this_agent_number]
@@ -85,7 +79,13 @@ class Agent(object):
             my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis=0)
             self.opponent_alpha = np.mean(opp_price_mean / my_ideal_price_mean, axis=0)
             self.opponent_alpha_list.append(self.opponent_alpha)
-
+            
+            # confirm opponent has a logical alpha
+            if did_customer_buy_from_me:
+                self.opponent_logic = True if self.opponent_alpha_list[-1] <=  self.opponent_alpha_list[-2] else False
+            else:
+                self.opponent_logic = True if self.opponent_alpha_list[-1] >= self.opponent_alpha_list[-2] else False
+                
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
                 if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
@@ -127,9 +127,7 @@ class Agent(object):
         if self.iter > 0:
             self._process_last_sale(last_sale, profit_each_team)
 
-        self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
-        # self.all_covs.append(covs)
         if new_buyer_embedding is not None:
             vector = self.get_user_item_vectors(new_buyer_embedding)
             full_covs = np.concatenate((covs, vector))
@@ -173,10 +171,9 @@ class Agent(object):
         # Guard against negative prices
         prices = [self.epsilon if p <= 0 else p for p in prices]
 
-        self.time = time.time() - self.time  # end timer
         self.iter += 1
         
-        # print(self.opponent_alpha_list)
+        print(self.opponent_logic)
         
         return prices
 
