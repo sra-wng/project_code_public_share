@@ -2,6 +2,7 @@ import random
 import pickle
 import os
 import numpy as np
+import math
 
 # Team SVM Libraries
 import itertools
@@ -54,17 +55,19 @@ class Agent(object):
 
         which_item_customer_bought = last_sale[0]
 
-        self.save_action.append(last_sale[0])
+        v = -1 if math.isnan(last_sale[0]) else last_sale[0]
+        self.save_action.append([v])
 
-        if self.iter % 500 == 0:
+        if self.iter % 50000 == 0:
 
             info = np.concatenate(
-                (
+                [
                     self.save_action,
                     self.save_prices,
                     self.save_covariates,
                     self.save_embeddings,
-                )
+                ],
+                axis=1,
             )
             time_stmp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             pd.DataFrame(
@@ -98,8 +101,11 @@ class Agent(object):
         if self.iter > 0:
             self._process_last_sale(last_sale, profit_each_team)
 
-        self.save_covariates.append(new_buyer_covariates)
-        self.save_embeddings.append(new_buyer_embedding)
+        self.save_covariates.append(new_buyer_covariates.tolist())
+        if new_buyer_embedding is not None:
+            self.save_embeddings.append(new_buyer_embedding.tolist())
+        else:
+            self.save_embeddings.append([None for _ in range(10)])
 
         self.time = time.time()  # start timer
         covs = self.normalize_covs(new_buyer_covariates)
@@ -117,7 +123,7 @@ class Agent(object):
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-        self.save_prices.append(prices)
+        self.save_prices.append(list(prices))
         return prices
 
     def normalize_covs(self, covariate):
