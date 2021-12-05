@@ -176,11 +176,10 @@ class Agent(object):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
                     prices[1] = self.opponent_prices[-1][1] - self.epsilon
+        # Defense Against Random
         if self.illogical and (self.opp_price_mean.all() != 0):
-            prices = [
-                random.uniform(0.38 * self.opp_price_mean[0], 0.42 * self.opp_price_mean[0]),
-                random.uniform(0.38 * self.opp_price_mean[1], 0.42 * self.opp_price_mean[1]),
-            ]
+            new_p = [random.uniform(0.93 * self.opp_price_mean[0], 0.95 * self.opp_price_mean[0]), random.uniform(0.93 * self.opp_price_mean[1], 0.95 * self.opp_price_mean[1])]
+            prices = [new_p[i] if (new_p[i] < p) else p  for i, p in enumerate(prices)]
         elif not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
