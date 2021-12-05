@@ -112,7 +112,7 @@ class Agent(object):
                         if (
                             sum(self.opponent_logic_list[-30:])
                             / len(self.opponent_logic_list[-30:])
-                            < 0.60
+                            < 0.55
                         )
                         and (
                             sum(self.price_logic_list[-30:])
