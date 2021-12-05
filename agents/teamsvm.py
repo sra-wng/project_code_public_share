@@ -43,13 +43,15 @@ class Agent(object):
         self.alpha_list = []
         self.opponent_alpha = 1
         self.opponent_alpha_list = []
-        self.opponent_logic = []
+        self.opponent_logic_list = []
+        self.opp_price_mean = 0
         self.my_prices = []
         self.my_ideal_prices = []
         self.opponent_prices = []
         self.agent_winner = []
         self.item_purchased = []
         self.lose_on_purpose = False
+        self.illogical = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
         my_current_profit = profit_each_team[self.this_agent_number]
@@ -75,23 +77,26 @@ class Agent(object):
             if (0 <= p[0] <= 5) and (0 <= p[1] <= 5):
                 opp_prices_no_outliers.append(p)
         if len(opp_prices_no_outliers) > 7:
-            opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis=0)
+            self.opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis=0)
             my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis=0)
-            self.opponent_alpha = np.mean(opp_price_mean / my_ideal_price_mean, axis=0)
+            self.opponent_alpha = np.mean(self.opp_price_mean / my_ideal_price_mean, axis=0)
             self.opponent_alpha_list.append(self.opponent_alpha)
 
             # confirm opponent has a logical alpha
-            if len(self.opponent_alpha_list) > 2:
-                if did_customer_buy_from_me:
-                    if self.opponent_alpha_list[-1] <= self.opponent_alpha_list[-2]:
-                        self.opponent_logic.append(True)
-                    else:
-                        self.opponent_logic.append(False)
-                else:
+            if (len(self.opponent_alpha_list) > 3):
+                if self.agent_winner[-2] == self.opponent_number:
                     if self.opponent_alpha_list[-1] >= self.opponent_alpha_list[-2]:
-                        self.opponent_logic.append(True)
+                        self.opponent_logic_list.append(True)
                     else:
-                        self.opponent_logic.append(False)
+                        self.opponent_logic_list.append(False)
+                else:
+                    if self.opponent_alpha_list[-1] <= self.opponent_alpha_list[-2]:
+                        self.opponent_logic_list.append(True)
+                    else:
+                        self.opponent_logic_list.append(False)
+                if len(self.opponent_logic_list) > 30:
+                  self.illogical = True if sum(self.opponent_logic[-30:])/len(self.opponent_logic[-30:]) < 0.55 else False
+
 
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
@@ -164,7 +169,11 @@ class Agent(object):
                 fixed = True
                 if prices[1] > self.opponent_prices[-1][1]:
                     prices[1] = self.opponent_prices[-1][1] - self.epsilon
-        if not fixed:
+        if self.illogical and (self.opp_price_mean != 0):
+            l_price = 0.38 * self.opp_price_mean
+            h_price = 0.42 * self.opp_price_mean
+            prices = [random.uniform(l_price, h_price, random.uniform(l_price, h_price)]
+        elif not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
             if rev < self.rev_sacrifice and self.alpha < 0.8:
