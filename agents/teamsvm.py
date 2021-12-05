@@ -79,11 +79,13 @@ class Agent(object):
         if len(opp_prices_no_outliers) > 7:
             self.opp_price_mean = np.mean(opp_prices_no_outliers[-7:], axis=0)
             my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis=0)
-            self.opponent_alpha = np.mean(self.opp_price_mean / my_ideal_price_mean, axis=0)
+            self.opponent_alpha = np.mean(
+                self.opp_price_mean / my_ideal_price_mean, axis=0
+            )
             self.opponent_alpha_list.append(self.opponent_alpha)
 
             # confirm opponent has a logical alpha
-            if (len(self.opponent_alpha_list) > 3):
+            if len(self.opponent_alpha_list) > 3:
                 if self.agent_winner[-2] == self.opponent_number:
                     if self.opponent_alpha_list[-1] >= self.opponent_alpha_list[-2]:
                         self.opponent_logic_list.append(True)
@@ -95,8 +97,13 @@ class Agent(object):
                     else:
                         self.opponent_logic_list.append(False)
                 if len(self.opponent_logic_list) > 30:
-                  self.illogical = True if sum(self.opponent_logic[-30:])/len(self.opponent_logic[-30:]) < 0.55 else False
-
+                    self.illogical = (
+                        True
+                        if sum(self.opponent_logic_list[-30:])
+                        / len(self.opponent_logic_list[-30:])
+                        < 0.55
+                        else False
+                    )
 
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
@@ -172,7 +179,10 @@ class Agent(object):
         if self.illogical and (self.opp_price_mean != 0):
             l_price = 0.38 * self.opp_price_mean
             h_price = 0.42 * self.opp_price_mean
-            prices = [random.uniform(l_price, h_price), random.uniform(l_price, h_price)]
+            prices = [
+                random.uniform(l_price, h_price),
+                random.uniform(l_price, h_price),
+            ]
         elif not fixed:
             prices = [self.alpha * p for p in prices]
             # Purposely lose low revenue items to improve alpha to our benefit
@@ -188,8 +198,6 @@ class Agent(object):
         prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.iter += 1
-
-        print(self.opponent_logic)
 
         return prices
 
