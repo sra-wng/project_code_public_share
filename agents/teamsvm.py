@@ -176,7 +176,7 @@ class Agent(object):
         self.time = time.time() - self.time  # end timer
         self.iter += 1
         
-        print(self.opponent_alpha_list)
+        # print(self.opponent_alpha_list)
         
         return prices
 
