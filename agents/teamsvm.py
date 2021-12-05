@@ -48,30 +48,6 @@ class Agent(object):
         self.opponent_alpha_list = []
         self.winning_streak = 0
         self.losing_streak = 0
-        self.positive_weights = [
-            1.2,
-            1.15,
-            1.1,
-            1.09,
-            1.08,
-            1.07,
-            1.06,
-            1.05,
-            1.05,
-            1.03,
-        ]
-        self.penalty_weights = [
-            0.8,
-            0.85,
-            0.9,
-            0.91,
-            0.92,
-            0.93,
-            0.94,
-            0.95,
-            0.96,
-            0.97,
-        ]
         self.my_prices = []
         self.my_ideal_prices = []
         self.opponent_prices = []
@@ -82,8 +58,6 @@ class Agent(object):
         # self.new_models = False
 
     def _process_last_sale(self, last_sale, profit_each_team):
-        # print("last_sale: ", last_sale)
-        # print("profit_each_team: ", profit_each_team)
         my_current_profit = profit_each_team[self.this_agent_number]
         opponent_current_profit = profit_each_team[self.opponent_number]
 
@@ -94,15 +68,6 @@ class Agent(object):
         did_customer_buy_from_opponent = last_sale[1] == self.opponent_number
 
         which_item_customer_bought = last_sale[0]
-
-        # print("My current profit: ", my_current_profit)
-        # print("Opponent current profit: ", opponent_current_profit)
-        # print("My last prices: ", my_last_prices)
-        # print("Opponent last prices: ", opponent_last_prices)
-        # print("Did customer buy from me: ", did_customer_buy_from_me)
-        # print("Did customer buy from opponent: ", did_customer_buy_from_opponent)
-        # print("Which item customer bought: ", which_item_customer_bought)
-        # print("Time to run last iteration: ", self.time)
 
         # TEAM SVM CODE STARTS HERE
         self.my_prices.append(my_last_prices)
@@ -130,7 +95,7 @@ class Agent(object):
 
             # set base alpha as benevolent opponent alpha
             self.alpha = (
-                0.94 * self.alpha
+                0.94 *self.alpha
                 if self.alpha > self.opponent_alpha
                 else 0.94 * self.opponent_alpha
             )
@@ -140,32 +105,12 @@ class Agent(object):
             self.alpha = opponent_last_prices[i] / self.my_ideal_prices[0][i]
 
         elif not self.lose_on_purpose:
-            # self.winning_streak = (
-            #     self.winning_streak + 1 if did_customer_buy_from_me else 0
-            # )
-            # self.winning_streak = (
-            #     len(self.positive_weights) - 1
-            #     if self.winning_streak > len(self.positive_weights) - 1
-            #     else self.winning_streak
-            # )
-            # self.losing_streak = (
-            #     self.losing_streak + 1 if did_customer_buy_from_me else 0
-            # )
-            # self.losing_streak = (
-            #     len(self.penalty_weights) - 1
-            #     if self.losing_streak > len(self.penalty_weights) - 1
-            #     else self.losing_streak
-            # )
-            # self.alpha *= (
-            #     self.positive_weights[self.winning_streak]
-            #     if did_customer_buy_from_me
-            #     else self.penalty_weights[self.losing_streak]
-            # )
             self.alpha *= 1.15 if did_customer_buy_from_me else 0.95
         else:
             self.alpha *= 1.05
 
         self.alpha = 1 if self.alpha > 1 else self.alpha
+        self.alpha = self.epsilon if self.alpha < 0 else self.alpha
 
         # add forgiveness if the alpha goes too low
         self.alpha = (
@@ -219,7 +164,7 @@ class Agent(object):
             # Purposely lose low revenue items to improve alpha to our benefit
             if rev < self.rev_sacrifice and self.alpha < 0.8:
                 self.lose_on_purpose = True
-                prices = [1000000000, 1000000000]
+                prices = [float("inf"), float("inf")]
             else:
                 self.lose_on_purpose = False
                 if rev > 1.95:  # 80% discount to make sure we capture these customers
@@ -230,15 +175,9 @@ class Agent(object):
 
         self.time = time.time() - self.time  # end timer
         self.iter += 1
-
-        print(
-            "My alpha: ",
-            self.alpha,
-            "Opponent Alpha: ",
-            self.opponent_alpha,
-            "Sacrifice Level: ",
-            self.rev_sacrifice,
-        )
+        
+        print(self.opponent_alpha_list)
+        
         return prices
 
     def normalize_covs(self, covariate):
