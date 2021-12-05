@@ -79,18 +79,20 @@ class Agent(object):
             my_ideal_price_mean = np.mean(self.my_ideal_prices[-7:], axis=0)
             self.opponent_alpha = np.mean(opp_price_mean / my_ideal_price_mean, axis=0)
             self.opponent_alpha_list.append(self.opponent_alpha)
-            
+
             # confirm opponent has a logical alpha
-            if did_customer_buy_from_me:
-                if self.opponent_alpha_list[-1] <=  self.opponent_alpha_list[-2]:
-                    self.opponent_logic.append(True)
+            if len(self.opponent_alpha_list) > 2:
+                if did_customer_buy_from_me:
+                    if self.opponent_alpha_list[-1] <= self.opponent_alpha_list[-2]:
+                        self.opponent_logic.append(True)
+                    else:
+                        self.opponent_logic.append(False)
                 else:
-                    self.opponent_logic.append(False)
-            else:
-                if self.opponent_alpha_list[-1] >=  self.opponent_alpha_list[-2]:
-                    self.opponent_logic.append(True)
-                else:
-                    self.opponent_logic.append(False)
+                    if self.opponent_alpha_list[-1] >= self.opponent_alpha_list[-2]:
+                        self.opponent_logic.append(True)
+                    else:
+                        self.opponent_logic.append(False)
+
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
                 if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
@@ -100,7 +102,7 @@ class Agent(object):
 
             # set base alpha as benevolent opponent alpha
             self.alpha = (
-                0.94 *self.alpha
+                0.94 * self.alpha
                 if self.alpha > self.opponent_alpha
                 else 0.94 * self.opponent_alpha
             )
@@ -177,9 +179,9 @@ class Agent(object):
         prices = [self.epsilon if p <= 0 else p for p in prices]
 
         self.iter += 1
-        
+
         print(self.opponent_logic)
-        
+
         return prices
 
     def normalize_covs(self, covariate):
