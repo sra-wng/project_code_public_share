@@ -82,10 +82,15 @@ class Agent(object):
             
             # confirm opponent has a logical alpha
             if did_customer_buy_from_me:
-                self.opponent_logic = True if self.opponent_alpha_list[-1] <=  self.opponent_alpha_list[-2] else False
+                if self.opponent_alpha_list[-1] <=  self.opponent_alpha_list[-2]:
+                    self.opponent_logic.append(True)
+                else:
+                    self.opponent_logic.append(False)
             else:
-                self.opponent_logic = True if self.opponent_alpha_list[-1] >= self.opponent_alpha_list[-2] else False
-                
+                if self.opponent_alpha_list[-1] >=  self.opponent_alpha_list[-2]:
+                    self.opponent_logic.append(True)
+                else:
+                    self.opponent_logic.append(False)
             # confirm opponent increase their alpha after lose on purpose move
             if self.lose_on_purpose:
                 if self.opponent_alpha_list[-1] > self.opponent_alpha_list[-2]:
